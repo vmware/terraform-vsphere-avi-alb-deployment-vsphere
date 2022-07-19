@@ -1,4 +1,9 @@
-# Ignore everything in this directory
-*
-# Except this file
-!.gitignore
+# Local .terraform directories
+**/.terraform/*
+**/*.tar.gz
+.terraform
+terraform.tfstate
+*.tfstate*
+terraform.tfvars
+.terraform.lock.hcl
+terraform.tfvars.*
