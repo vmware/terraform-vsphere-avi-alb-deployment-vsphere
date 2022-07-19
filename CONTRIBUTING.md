@@ -1,9 +1,6 @@
-# Contributing to terraform-vsphere-avi-alb-deployment-vsphere
+# Contributing to terraform-aws-avi-alb-deployment-aws
 
-The terraform-vsphere-avi-alb-deployment-vsphere project team welcomes contributions from the community. Before you start working with terraform-vsphere-avi-alb-deployment-vsphere, please
-read our [Developer Certificate of Origin](https://cla.vmware.com/dco). All contributions to this repository must be
-signed as described on that page. Your signature certifies that you wrote the patch or have the right to pass it on
-as an open-source patch.
+The terraform-vsphere-avi-alb-deployment-vsphere project team welcomes contributions from the community. Before you start working with this project please read and sign our Contributor License Agreement (https://cla.vmware.com/cla/1/preview). If you wish to contribute code and you have not signed our Contributor Licence Agreement (CLA), our bot will prompt you to do so when you open a Pull Request. For any questions about the CLA process, please refer to our [FAQ](https://cla.vmware.com/faq).
 
 ## Contribution Flow
 
@@ -18,7 +15,7 @@ This is a rough outline of what a contributor's workflow looks like:
 Example:
 
 ``` shell
-git remote add upstream https://github.com/vmware/terraform-vsphere-avi-alb-deployment-vsphere.git
+git remote add upstream https://github.com/vmware/terraform-aws-avi-alb-deployment-aws.git
 git checkout -b my-new-feature main
 git commit -a
 git push origin my-new-feature
