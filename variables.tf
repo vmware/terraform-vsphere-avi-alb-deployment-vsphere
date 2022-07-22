@@ -91,8 +91,8 @@ variable "configure_gslb_additional_sites" {
 }
 variable "additional_gslb_sites" {
   description = "The Names and IP addresses of the GSLB Sites that will be configured."
-  type        = list(object({ name = string, ip_address = string, dns_vs_name = string }))
-  default     = [{ name = "", ip_address = "", dns_vs_name = "" }]
+  type        = list(object({ name = string, ip_address_list = list(string), dns_vs_name = string }))
+  default     = [{ name = "", ip_address_list = [""], dns_vs_name = "" }]
 }
 variable "vsphere_datacenter" {
   description = "The vSphere Datacenter that the Avi Controller(s) will be deployed"

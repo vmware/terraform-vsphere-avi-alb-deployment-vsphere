@@ -519,7 +519,7 @@
         tenant: admin
         dns_virtualservice_refs: "{{ dns_vs.obj.url }}"
 %{ endif ~}
-%{ if configure_gslb ~}
+%{ if configure_gslb && gslb_site_name != "" ~}
     - name: GSLB Config | Verify Cluster UUID
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -551,33 +551,31 @@
       register: gslb_results
 %{ endif ~}
 %{ if configure_gslb_additional_sites ~}%{ for site in additional_gslb_sites ~}
-    - name: Wait for connection to GSLB Site to become ready
-      wait_for:
-        host: "${site.ip_address}"
-        port: 443
-        timeout: 600
-        sleep: 5
-        msg: "Can't connect to GSLB Site - ${site.ip_address}"
-    - name: GSLB Config | Verify Cluster Status
+    - name: GSLB Config | Verify Remote Site is Ready
       avi_api_session:
-        controller: "${site.ip_address}"
-        username: "admin"
-        password: "{{ password }}"
-        api_version: ${avi_version}
-        http_method: get
-        path: cluster/runtime
-      until: clusterstatus.obj.cluster_state.progress is defined
-      retries: 10
-      delay: 10
-      register: clusterstatus
-    - name: GSLB Config | Verify DNS configuration
-      avi_api_session:
-        controller: "${site.ip_address}"
+        controller: "${site.ip_address_list[0]}"
         username: "admin"
         password: "{{ password }}"
         api_version: ${avi_version}
         http_method: get
         path: virtualservice?name=DNS-VS
+      until: remote_site_check is not failed
+      retries: 30
+      delay: 10
+      register: remote_site_check
+
+    - name: GSLB Config | Verify DNS configuration
+      avi_api_session:
+        controller: "${site.ip_address_list[0]}"
+        username: "admin"
+        password: "{{ password }}"
+        api_version: ${avi_version}
+        http_method: get
+        path: virtualservice?name=DNS-VS
+      until: dns_vs_verify is not failed
+      failed_when: dns_vs_verify.obj.count != 1
+      retries: 30
+      delay: 10
       register: dns_vs_verify
     - name: Display DNS VS Verify
       ansible.builtin.debug:
@@ -594,7 +592,7 @@
           port: 443
           ip_addresses:
             - type: "V4"
-              addr: "${site.ip_address}"
+              addr: "${site.ip_address_list[0]}"
       register: gslb_verify  
     - name: Display GSLB Siteops Verify
       ansible.builtin.debug:
@@ -614,8 +612,10 @@
                 password: "{{ password }}"
                 cluster_uuid: "{{ gslb_verify.obj.rx_uuid }}"
                 ip_addresses:
+%{ for address in site.ip_address_list ~}
                   - type: "V4"
-                    addr: "${site.ip_address}"
+                    addr: "${address}"
+%{ endfor ~}
                 dns_vses:
                   - dns_vs_uuid: "{{ dns_vs_verify.obj.results.0.uuid }}"
 %{ endfor ~}%{ endif ~}%{ endif ~}
