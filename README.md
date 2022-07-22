@@ -139,7 +139,7 @@ module "avi_controller_west" {
   gslb_site_name                  = "West1"
   gslb_domains                    = ["gslb.avidemo.net"]
   configure_gslb_additional_sites = "true"
-  additional_gslb_sites           = [{name = "East1", ip_address_list = module.avi_controller_east.[*].private_ip_address , dns_vs_name = "DNS-VS"}]
+  additional_gslb_sites           = [{name = "East1", ip_address_list = module.avi_controller_east.controllers[*].private_ip_address , dns_vs_name = "DNS-VS"}]
 }
 
 module "avi_controller_east" {
