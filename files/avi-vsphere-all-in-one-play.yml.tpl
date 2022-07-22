@@ -7,9 +7,9 @@
   vars:
     avi_credentials:
         controller: "{{ controller_ip[0] }}"
-        username: "admin"
+        username: "{{ username }}"
         password: "{{ password }}"
-        api_version: ${avi_version}
+        api_version: "{{ api_version }}"
     username: "admin"
     password: "{{ password }}"
     api_version: ${avi_version}
@@ -554,9 +554,9 @@
     - name: GSLB Config | Verify Remote Site is Ready
       avi_api_session:
         controller: "${site.ip_address_list[0]}"
-        username: "admin"
+        username: "{{ username }}"
         password: "{{ password }}"
-        api_version: ${avi_version}
+        api_version: "{{ api_version }}"
         http_method: get
         path: virtualservice?name=DNS-VS
       until: remote_site_check is not failed
@@ -567,9 +567,9 @@
     - name: GSLB Config | Verify DNS configuration
       avi_api_session:
         controller: "${site.ip_address_list[0]}"
-        username: "admin"
+        username: "{{ username }}"
         password: "{{ password }}"
-        api_version: ${avi_version}
+        api_version: "{{ api_version }}"
         http_method: get
         path: virtualservice?name=DNS-VS
       until: dns_vs_verify is not failed
@@ -645,4 +645,8 @@
                 addr: "{{ controller_ip[2] }}"
         name: "cluster01"
         tenant_uuid: "admin"
+      until: cluster_config is not failed
+      retries: 10
+      delay: 5
+      register: cluster_config
 %{ endif ~}
