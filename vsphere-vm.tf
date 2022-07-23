@@ -4,6 +4,8 @@ locals {
     vsphere_user                    = var.vsphere_avi_user == null ? var.vsphere_user : var.vsphere_avi_user
     vsphere_server                  = var.vsphere_server
     vm_datacenter                   = var.vsphere_datacenter
+    use_content_lib                 = var.se_use_content_lib
+    content_lib_name                = var.se_content_lib_name == null ? var.content_library : var.se_content_lib_name
     se_mgmt_portgroup               = var.se_mgmt_portgroup
     configure_se_mgmt_network       = var.configure_se_mgmt_network
     se_mgmt_network                 = var.configure_se_mgmt_network ? var.se_mgmt_network : null

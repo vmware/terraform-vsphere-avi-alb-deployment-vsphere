@@ -21,6 +21,8 @@
     vsphere_user: ${vsphere_user}
     vsphere_server: ${vsphere_server}
     vm_datacenter: ${vm_datacenter}
+    use_content_lib: ${use_content_lib}
+    content_lib_name: ${content_lib_name}
 %{ if configure_se_mgmt_network ~}
     se_mgmt_portgroup: ${se_mgmt_portgroup}
 %{ endif ~}
@@ -125,6 +127,15 @@
           vcenter_url: "{{ vsphere_server }}"
           privilege: WRITE_ACCESS
           datacenter: "{{ vm_datacenter }}"
+          %{ for i in split(".", avi_version) ~}
+          %{ if i == "22" }
+          use_content_lib: "{{ use_content_lib }}"
+          %{ if use_content_lib }
+          content_lib:
+            name: "{{ content_lib_name }}"
+          %{ endif }
+          %{ endif }
+          %{ endfor }
         dhcp_enabled: true
         license_type: "LIC_CORES"
       register: avi_cloud

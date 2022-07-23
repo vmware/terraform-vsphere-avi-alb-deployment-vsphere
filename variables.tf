@@ -107,6 +107,16 @@ variable "content_library" {
   description = "The name of the Content Library that has the Avi Controller Image"
   type        = string
 }
+variable "se_use_content_lib" {
+  description = "Determines if a Content Libary will be used to store the Avi SE Image. Only applies to 22.1.1 and above."
+  type        = bool
+  default     = "true"
+}
+variable "se_content_lib_name" {
+  description = "The name the Content Library used for the SE image. If se_use_content_lib is true and this variable is not set the content_library variable will be used"
+  type        = string
+  default     = null
+}
 variable "vm_datastore" {
   description = "The vSphere Datastore that will back the Avi Controller VMs"
   type        = string
