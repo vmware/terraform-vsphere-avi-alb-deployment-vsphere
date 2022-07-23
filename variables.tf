@@ -94,6 +94,11 @@ variable "additional_gslb_sites" {
   type        = list(object({ name = string, ip_address_list = list(string), dns_vs_name = string }))
   default     = [{ name = "", ip_address_list = [""], dns_vs_name = "" }]
 }
+variable "create_gslb_se_group" {
+  description = "Create a SE group for GSLB. This option only applies when configure_gslb is set to true"
+  type        = bool
+  default     = "true"
+}
 variable "vsphere_datacenter" {
   description = "The vSphere Datacenter that the Avi Controller(s) will be deployed"
   type        = string

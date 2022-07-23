@@ -176,17 +176,17 @@
       retries: 5
       delay: 10
       register: vcenter_discovery
-      %{ endif }
-    - name: Wait for Cloud status to be ready
+      
+    - name: Wait for Cloud Status to be ready
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
         http_method: get
         path: "cloud/{{ avi_cloud.obj.uuid }}/status"
-      until: cloudstatus.obj.state == "CLOUD_STATE_PLACEMENT_READY"
-      retries: 5
+      until: cloudplacement.obj.state == "CLOUD_STATE_PLACEMENT_READY"
+      retries: 60
       delay: 10
-      register: cloudstatus
-
+      register: cloudplacement
+    %{ endif }
     - name: Update SE Mgmt Network Object with Static Pool
       avi_network:
         avi_credentials: "{{ avi_credentials }}"
@@ -476,69 +476,24 @@
             full_client_logs:
               enabled: true
               duration: 30
-              throttle: 10
-            client_insights: NO_INSIGHTS
-            all_headers: false
             metrics_realtime_update:
               enabled: true
               duration: 30
-            udf_log_throttle: 10
-            significant_log_throttle: 10
-            learning_log_policy:
-              enabled: false
-            client_log_filters: []
-            client_insights_sampling: {}
-          enable_autogw: true
-          weight: 1
-          delay_fairness: false
-          max_cps_per_client: 0
-          limit_doser: false
-          type: VS_TYPE_NORMAL
-          use_bridge_ip_as_vip: false
-          flow_dist: LOAD_AWARE
-          ign_pool_net_reach: false
-          ssl_sess_cache_avg_size: 1024
-          remove_listening_port_on_vs_down: false
-          close_client_conn_on_config_update: false
-          bulk_sync_kvcache: false
-          advertise_down_vs: false
-          scaleout_ecmp: false
-          active_standby_se_tag: ACTIVE_STANDBY_SE_1
-          flow_label_type: NO_LABEL
-          content_rewrite:
-            request_rewrite_enabled: false
-            response_rewrite_enabled: false
-            rewritable_content_ref: /api/stringgroup?name=System-Rewritable-Content-Types
-          sideband_profile:
-            sideband_max_request_body_size: 1024
-          use_vip_as_snat: false
           traffic_enabled: true
-          allow_invalid_client_cert: false
-          vh_type: VS_TYPE_VH_SNI
           application_profile_ref: /api/applicationprofile?name=System-DNS
           network_profile_ref: /api/networkprofile?name=System-UDP-Per-Pkt
           analytics_profile_ref: /api/analyticsprofile?name=System-Analytics-Profile
-%{ if configure_gslb ~}
+          %{ if configure_gslb && create_gslb_se_group }
           se_group_ref: "{{ gslb_se_group.obj.url }}"
-%{ endif ~} 
+          %{ endif}
           cloud_ref: "{{ avi_cloud.obj.url }}"
           services:
           - port: 53
             port_range_end: 53
-            enable_ssl: false
-            enable_http2: false
-          #dns_policies:
-          #- index: 11
-          #  dns_policy_ref_data:
-          #    rule: []
-          #    name: DNS-VIP-Default-Cloud-DNS-Policy-0
-          #topology_policies:
-          #- index: 11
-          #  dns_policy_ref_data:
-          #    rule: []
-          #    name: DNS-VIP-Default-Cloud-Topology-Policy-0
+          - port: 53
+            port_range_end: 53
+            override_network_profile_ref: /api/networkprofile/?name=System-TCP-Proxy
           vsvip_ref: "{{ vsvip_results.obj.url }}"
-          vs_datascripts: []
       register: dns_vs
 
     - name: Add DNS-VS to System Configuration
