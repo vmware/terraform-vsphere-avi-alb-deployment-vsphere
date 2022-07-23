@@ -59,7 +59,7 @@
     dns_vs_settings: 
       ${ indent(6, yamlencode(dns_vs_settings))}
 %{ endif ~}
-%{ if configure_gslb }
+%{ if configure_gslb ~}
     gslb_site_name: ${gslb_site_name}
     additional_gslb_sites:
       ${ indent(6, yamlencode(additional_gslb_sites))}
@@ -70,6 +70,7 @@
         port: 443
         timeout: 600
         sleep: 5
+
     - name: Configure System Configurations
       avi_systemconfiguration:
         avi_credentials: "{{ avi_credentials }}"
@@ -96,6 +97,7 @@
           redirect_to_https: true
           use_uuid_from_input: false
         welcome_workflow_complete: true
+
     - name: Set Backup Passphrase
       avi_backupconfiguration:
         avi_credentials: "{{ avi_credentials }}"
@@ -105,6 +107,7 @@
         name: Backup-Configuration
         backup_passphrase: "{{ password }}"
         upload_to_remote_host: false
+
 %{ if configure_cloud ~}
     - name: Wait for connection to vCenter to become ready
       wait_for:
@@ -113,6 +116,7 @@
         timeout: 600
         sleep: 5
         msg: "Can't connect to vCenter Server - {{ vsphere_server }}"
+
     - name: Configure Cloud
       avi_cloud:
         avi_credentials: "{{ avi_credentials }}"
@@ -127,15 +131,16 @@
           vcenter_url: "{{ vsphere_server }}"
           privilege: WRITE_ACCESS
           datacenter: "{{ vm_datacenter }}"
-          %{ for i in split(".", avi_version) ~}%{ if i == "22" }
+%{ if split(".", avi_version)[0] == "22" ~}
           use_content_lib: "{{ use_content_lib }}"
-          %{ if use_content_lib }
+%{ if use_content_lib ~}
           content_lib:
             name: "{{ content_lib_name }}"
-          %{ endif }%{ endif }%{ endfor }
+%{ endif ~}%{ endif ~}
         dhcp_enabled: true
         license_type: "LIC_CORES"
       register: avi_cloud
+
     - name: Get Mangement Network UUID
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -145,6 +150,7 @@
       retries: 5
       delay: 10
       register: mgmt_network
+
     - name: Update Cloud Configuration with Mgmt Network 
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -160,7 +166,7 @@
                   addr: "{{ se_mgmt_network.network | ipaddr('network') }}"
                   type: "{{ se_mgmt_network.type }}"
                 mask: "{{ se_mgmt_network.network | ipaddr('prefix') }}"
-    %{ for i in split(".", avi_version) ~}%{ if i != "22" }
+    %{ if split(".", avi_version)[0] != "22" }
     - name: Wait for vCenter Discovery to complete
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -170,7 +176,7 @@
       retries: 5
       delay: 10
       register: vcenter_discovery
-      %{ endif }%{ endfor }
+      %{ endif }
     - name: Wait for Cloud status to be ready
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -180,6 +186,7 @@
       retries: 5
       delay: 10
       register: cloudstatus
+
     - name: Update SE Mgmt Network Object with Static Pool
       avi_network:
         avi_credentials: "{{ avi_credentials }}"
@@ -205,6 +212,7 @@
               type: STATIC_IPS_FOR_VIP_AND_SE
         ip6_autocfg_enabled: false
       register: update_mgmt_network
+
     - name: Create Default Route in Mgmt VRF
       avi_vrfcontext:
         avi_credentials: "{{ avi_credentials }}"
@@ -225,6 +233,7 @@
       register: mgmt_network_default_route
 %{ endif ~} 
 %{ if se_ha_mode == "active/active" ~}
+
     - name: Configure SE-Group
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -250,6 +259,7 @@
             enabled: true
 %{ endif ~}
 %{ if se_ha_mode == "n+m" ~}
+
     - name: Configure SE-Group
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -275,6 +285,7 @@
             enabled: true
 %{ endif ~}
 %{ if se_ha_mode == "active/standby" ~}
+
     - name: Configure SE-Group
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -299,6 +310,7 @@
             enabled: true
 %{ endif ~}
 %{ if configure_ipam_profile ~}
+
     - name: Update IPAM Network Objects with Static Pool
       avi_network:
         avi_credentials: "{{ avi_credentials }}"
@@ -325,12 +337,15 @@
         ip6_autocfg_enabled: false
       loop: "{{ ipam_networks }}"
       register: ipam_net
+
     - name: Create list with IPAM Network URLs
       set_fact: ipam_net_urls="{{ ipam_net.results | map(attribute='obj.url') | list }}"
+
     - name: Create list formated for Avi IPAM profile API
       set_fact:
         ipam_list: "{{ ipam_list | default([]) + [{ 'nw_ref': item  }] }}"
       loop: "{{ ipam_net_urls }}"
+
     - name: Create Avi IPAM Profile
       avi_ipamdnsproviderprofile:
         avi_credentials: "{{ avi_credentials }}"
@@ -342,6 +357,7 @@
           usable_networks: "{{ ipam_list }}"
         allocate_ip_in_vrf: false
       register: create_ipam
+
     - name: Update Cloud Configuration with IPAM profile 
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -352,6 +368,7 @@
             ipam_provider_ref: "{{ create_ipam.obj.url }}"
 %{ endif ~}
 %{ if configure_dns_profile ~}
+
     - name: Create Avi DNS Profile
       avi_ipamdnsproviderprofile:
         avi_credentials: "{{ avi_credentials }}"
@@ -364,6 +381,7 @@
             pass_through: true
           ttl: 30
       register: create_dns
+
     - name: Update Cloud Configuration with DNS profile 
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -374,6 +392,7 @@
             dns_provider_ref: "{{ create_dns.obj.url }}"
 %{ endif ~}
 %{ if configure_gslb ~}
+
     - name: Configure GSLB SE-Group
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -397,6 +416,7 @@
       register: gslb_se_group
 %{ endif ~}
 %{ if configure_dns_vs ~}
+
     - name: Create DNS VSVIP
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -530,12 +550,14 @@
         dns_virtualservice_refs: "{{ dns_vs.obj.url }}"
 %{ endif ~}
 %{ if configure_gslb && gslb_site_name != "" ~}
+
     - name: GSLB Config | Verify Cluster UUID
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
         http_method: get
         path: cluster
       register: cluster
+
     - name: Create GSLB Config
       avi_gslb:
         avi_credentials: "{{ avi_credentials }}"
@@ -561,6 +583,7 @@
       register: gslb_results
 %{ endif ~}
 %{ if configure_gslb_additional_sites ~}%{ for site in additional_gslb_sites ~}
+
     - name: GSLB Config | Verify Remote Site is Ready
       avi_api_session:
         controller: "${site.ip_address_list[0]}"
@@ -587,9 +610,11 @@
       retries: 30
       delay: 10
       register: dns_vs_verify
+
     - name: Display DNS VS Verify
       ansible.builtin.debug:
         var: dns_vs_verify
+
     - name: GSLB Config | Verify GSLB site configuration
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -603,10 +628,12 @@
           ip_addresses:
             - type: "V4"
               addr: "${site.ip_address_list[0]}"
-      register: gslb_verify  
+      register: gslb_verify
+
     - name: Display GSLB Siteops Verify
       ansible.builtin.debug:
         var: gslb_verify
+
     - name: Add GSLB Sites
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -630,6 +657,7 @@
                   - dns_vs_uuid: "{{ dns_vs_verify.obj.results.0.uuid }}"
 %{ endfor ~}%{ endif ~}%{ endif ~}
 %{ if controller_ha ~}
+
     - name: Controller Cluster Configuration
       avi_cluster:
         avi_credentials: "{{ avi_credentials }}"
