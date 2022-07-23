@@ -127,15 +127,12 @@
           vcenter_url: "{{ vsphere_server }}"
           privilege: WRITE_ACCESS
           datacenter: "{{ vm_datacenter }}"
-          %{ for i in split(".", avi_version) ~}
-          %{ if i == "22" }
+          %{ for i in split(".", avi_version) ~}%{ if i == "22" }
           use_content_lib: "{{ use_content_lib }}"
           %{ if use_content_lib }
           content_lib:
             name: "{{ content_lib_name }}"
-          %{ endif }
-          %{ endif }
-          %{ endfor }
+          %{ endif }%{ endif }%{ endfor }
         dhcp_enabled: true
         license_type: "LIC_CORES"
       register: avi_cloud
@@ -163,6 +160,7 @@
                   addr: "{{ se_mgmt_network.network | ipaddr('network') }}"
                   type: "{{ se_mgmt_network.type }}"
                 mask: "{{ se_mgmt_network.network | ipaddr('prefix') }}"
+    %{ for i in split(".", avi_version) ~}%{ if i != "22" }
     - name: Wait for vCenter Discovery to complete
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -172,6 +170,7 @@
       retries: 5
       delay: 10
       register: vcenter_discovery
+      %{ endif }%{ endfor }
     - name: Wait for Cloud status to be ready
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
