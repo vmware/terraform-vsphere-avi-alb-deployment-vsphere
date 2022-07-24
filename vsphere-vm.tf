@@ -15,12 +15,16 @@ locals {
     dns_search_domain               = var.dns_search_domain
     ntp_servers                     = var.ntp_servers
     email_config                    = var.email_config
-    se_name_prefix                  = var.name_prefix
+    name_prefix                     = var.name_prefix
     vcenter_folder                  = var.vm_folder
     se_cpu                          = var.se_size[0]
     se_memory                       = var.se_size[1]
     se_disk                         = var.se_size[2]
     controller_ha                   = var.controller_ha
+    register_controller             = var.register_controller
+    registration_jwt                = var.registration_jwt
+    registration_email              = var.registration_email
+    registration_account_id         = var.registration_account_id
     controller_ip                   = var.controller_ip
     controller_names                = local.controller_names
     configure_ipam_profile          = var.configure_ipam_profile
@@ -104,9 +108,18 @@ resource "null_resource" "ansible_provisioner" {
     password = var.controller_password
   }
   provisioner "file" {
+    source      = "${path.module}/files/avi_pulse_registration.py"
+    destination = "/home/admin/avi_pulse_registration.py"
+  }
+  provisioner "file" {
     content = templatefile("${path.module}/files/avi-vsphere-all-in-one-play.yml.tpl",
     local.cloud_settings)
     destination = "/home/admin/avi-vsphere-all-in-one-play.yml"
+  }
+  provisioner "file" {
+    content = templatefile("${path.module}/files/avi-cloud-services-registration.yml.tpl",
+    local.cloud_settings)
+    destination = "/home/admin/avi-cloud-services-registration.yml"
   }
   provisioner "file" {
     content = templatefile("${path.module}/files/avi-cleanup.yml.tpl",
@@ -121,6 +134,11 @@ resource "null_resource" "ansible_provisioner" {
       "ansible-playbook avi-vsphere-all-in-one-play.yml -e password=${var.controller_password} -e vsphere_password=${var.vsphere_avi_password} > ansible-playbook.log 2> ansible-error.log",
       "echo Controller Configuration Completed"
     ]
-
+  }
+  provisioner "remote-exec" {
+    inline = var.register_controller ? [
+      "ansible-playbook avi-cloud-services-registration.yml -e password=${var.controller_password} >> ansible-playbook.log 2>> ansible-error.log",
+      "echo Controller Registration Completed"
+    ] : ["echo Controller Registration Skipped"]
   }
 }

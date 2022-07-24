@@ -1,5 +1,6 @@
 ---
-- hosts: localhost
+- name: Avi Configuration
+  hosts: localhost
   connection: local
   gather_facts: no
   roles:
@@ -29,7 +30,7 @@
     dns_search_domain: ${dns_search_domain}
     ansible_become: yes
     ansible_become_password: "{{ password }}"
-    se_name_prefix: ${se_name_prefix}
+    name_prefix: ${name_prefix}
     vcenter_folder: ${vcenter_folder}
     se_cpu: ${se_cpu}
     se_memory: ${se_memory}
@@ -249,7 +250,7 @@
           algo: PLACEMENT_ALGO_DISTRIBUTED
           buffer_se: "0"
           max_se: "10"
-          se_name_prefix: "{{ se_name_prefix }}"
+          se_name_prefix: "{{ name_prefix }}"
           vcenter_folder: "{{ vcenter_folder }}"
           vcpus_per_se: "{{ se_cpu }}"
           memory_per_se: "{{ se_memory * 1024 }}"
@@ -275,7 +276,7 @@
           algo: PLACEMENT_ALGO_PACKED
           buffer_se: "1"
           max_se: "10"
-          se_name_prefix: "{{ se_name_prefix }}"
+          se_name_prefix: "{{ name_prefix }}"
           vcenter_folder: "{{ vcenter_folder }}"
           vcpus_per_se: "{{ se_cpu }}"
           memory_per_se: "{{ se_memory * 1024 }}"
@@ -300,7 +301,7 @@
           min_scaleout_per_vs: 1
           buffer_se: "0"
           max_se: "2"
-          se_name_prefix: "{{ se_name_prefix }}"
+          se_name_prefix: "{{ name_prefix }}"
           vcenter_folder: "{{ vcenter_folder }}"
           vcpus_per_se: "{{ se_cpu }}"
           memory_per_se: "{{ se_memory * 1024 }}"
@@ -408,7 +409,7 @@
           max_se: "4"
           max_vs_per_se: "2"
           extra_shared_config_memory: 2000
-          se_name_prefix: "{{ se_name_prefix }}"
+          se_name_prefix: "{{ name_prefix }}"
           vcenter_folder: "{{ vcenter_folder }}"
           realtime_se_metrics:
             duration: "10080"
@@ -642,4 +643,27 @@
       retries: 10
       delay: 5
       register: cluster_config
+%{ endif ~}
+%{ if register_controller ~}
+
+    - name: Create Ansible collection directory
+      ansible.builtin.file:
+        path: /usr/share/ansible/collections
+        state: directory
+        mode: '0755'
+        owner: admin
+        group: admin
+
+    - name: Install Avi Collection
+      shell: ansible-galaxy collection install vmware.alb -p /usr/share/ansible/collections
+
+    - name: Copy Ansible module file
+      ansible.builtin.copy:
+        src: /home/admin/avi_pulse_registration.py
+        dest: /usr/share/ansible/collections/ansible_collections/vmware/alb/plugins/modules/avi_pulse_registration.py
+    
+    - name: Remove unused module file
+      ansible.builtin.file:
+        path: /home/admin/avi_pulse_registration.py
+        state: absent
 %{ endif ~}

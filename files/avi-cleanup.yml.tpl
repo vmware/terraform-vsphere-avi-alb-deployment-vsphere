@@ -5,13 +5,22 @@
   roles:
     - role: avinetworks.avisdk
   vars:
+    avi_credentials:
+        controller: "{{ controller }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        api_version: "{{ api_version }}"
     controller: "{{ ansible_host }}"
     username: admin
     cloud_name: "Default-Cloud"
     ansible_become: yes
     ansible_become_password: "{{ password }}"
-    avi_version: ${avi_version}
+    name_prefix: ${name_prefix}
+    api_version: ${avi_version}
     tenant_name: "admin"
+    registration_account_id: ${registration_account_id}
+    registration_email: ${registration_email}
+    registration_jwt: ${registration_jwt}
     
   tasks:
     - name: Remove all DNS Service Refs from System Configuration
@@ -76,3 +85,27 @@
         http_method: delete
         path: "serviceengine/{{ item.uuid }}"
       loop: "{{ se_results.obj.results }}"
+
+%{ if register_controller ~}
+    - name: Cloud Services Deregistration
+      vmware.alb.avi_pulse_registration:
+        avi_credentials: "{{ avi_credentials }}"
+        state: absent
+        jwt_token: "{{ registration_jwt }}"
+        name: "{{ name_prefix }}-cluster"
+        description: "{{ name_prefix }} Cluster"
+        email: "{{ registration_email }}"
+        account_id: "{{ registration_account_id }}"
+        optins: present
+        enable_pulse_case_management: True
+        case_config:
+          enable_auto_case_creation_on_controller_failure: False
+          enable_auto_case_creation_on_se_failure: False
+        enable_pulse_waf_management: True
+        waf_config:
+          enable_waf_signatures_notifications: True
+          enable_auto_download_waf_signatures: True
+        enable_user_agent_db_sync: True
+        enable_ip_reputation: True
+        enable_appsignature_sync: True
+%{ endif ~}
