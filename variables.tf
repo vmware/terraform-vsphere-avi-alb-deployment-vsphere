@@ -13,7 +13,7 @@ variable "register_controller" {
   default     = "false"
 }
 variable "registration_jwt" {
-  description = "Registration JWT Token for Avi Cloud Services"
+  description = "Registration JWT Token for Avi Cloud Services. This token can be retrieved at https://portal.avipulse.vmware.com/portal/controller/auth/cspctrllogin"
   type        = string
   default     = ""
 }
