@@ -22,9 +22,9 @@ locals {
     se_disk                         = var.se_size[2]
     controller_ha                   = var.controller_ha
     register_controller             = var.register_controller
-    registration_jwt                = var.registration_jwt
-    registration_email              = var.registration_email
-    registration_account_id         = var.registration_account_id
+    registration_jwt                = var.registration_settings.jwt_token
+    registration_email              = var.registration_settings.email
+    registration_account_id         = var.registration_settings.organization_id
     controller_ip                   = var.controller_ip
     controller_names                = local.controller_names
     configure_ipam_profile          = var.configure_ipam_profile
