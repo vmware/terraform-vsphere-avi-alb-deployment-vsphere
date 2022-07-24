@@ -15,17 +15,17 @@ variable "register_controller" {
 variable "registration_jwt" {
   description = "Registration JWT Token for Avi Cloud Services"
   type        = string
-  default     = null
+  default     = ""
 }
 variable "registration_email" {
   description = "Registration email address for Avi Cloud Services"
   type        = string
-  default     = null
+  default     = ""
 }
 variable "registration_account_id" {
   description = "Registration account ID for Avi Cloud Services"
   type        = string
-  default     = null
+  default     = ""
 }
 variable "create_roles" {
   description = "This variable controls the creation of Avi specific vSphere Roles for the Avi Controller to use. When set to false these roles should already be created and assigned to the vSphere account used by the Avi Controller."
