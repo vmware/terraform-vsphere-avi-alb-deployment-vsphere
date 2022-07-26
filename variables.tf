@@ -35,12 +35,12 @@ variable "create_roles" {
 variable "controller_default_password" {
   description = "This is the default password for the Avi controller image and can be found in the image download page."
   type        = string
-  sensitive   = true
+  sensitive   = false
 }
 variable "controller_password" {
   description = "The password that will be used authenticating with the Avi Controller. This password be a minimum of 8 characters and contain at least one each of uppercase, lowercase, numbers, and special characters"
   type        = string
-  sensitive   = true
+  sensitive   = false
   validation {
     condition     = length(var.controller_password) > 7
     error_message = "The controller_password value must be more than 8 characters and contain at least one each of uppercase, lowercase, numbers, and special characters."
@@ -49,6 +49,12 @@ variable "controller_password" {
 variable "avi_version" {
   description = "The version of Avi that will be deployed"
   type        = string
+}
+variable "avi_patch_upgrade" {
+  description = "This variable determines if a patch upgrade is performed after install. The enabled key should be set to true and the url from the Avi Cloud Services portal for the patch should be set for the upgrade_file_uri key"
+  sensitive   = false
+  type        = object({ enabled = bool, upgrade_file_uri = string })
+  default     = { enabled = "false", upgrade_file_uri = "" }
 }
 variable "controller_size" {
   description = "This value determines the number of vCPUs and memory allocated for the Avi Controller. Possible values are small, medium, or large."
@@ -189,7 +195,7 @@ variable "vsphere_avi_user" {
 }
 variable "vsphere_avi_password" {
   description = "The password for the user account that will be used for accessing vCenter from the Avi Controller(s)"
-  sensitive   = true
+  sensitive   = false
   type        = string
   default     = null
 }

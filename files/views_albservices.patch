@@ -1,0 +1,22 @@
+--- views_albservices_oauth_custom.py   2022-04-06 05:50:29.717387914 +0000
++++ /opt/avi/python/bin/portal/api/views_albservices_oauth_custom.py    2022-07-25 22:17:19.217124718 +0000
+@@ -268,16 +268,14 @@
+                                      timeout=30)
+             if response.status_code == StatusCodes.OK:
+                 log.info("Successfully fetched new access token with refresh token grant type.")
+-                access_token = response.json()['access_token']
++                refresh_response=response.json()
++                access_token=refresh_response.get('access_token')
++                default_instance_url=refresh_response.get('instance_url', 'EmptyURL')
+                 log.info("Saving token data in controller DB.")
+                 portal_utils.save_authentication_info(access_token, refresh_token, default_instance_url)
+                 # trigger the event to update pulse portal connectivity/health status
+                 portal_utils.trigger_albservices_status_update()
+                 return JsonResponse(data={}, status=StatusCodes.OK.value, safe=False)
+-            else:
+-                log.error("Error in refreshing access token with OAuth refresh grant. Remote Server Response: %s" %(response.text))
+-                return JsonResponse(data=json.loads(response.text), status=response.status_code,
+-                                    safe=False)
+         except Exception as ex:
+             log.exception(ex)
+             return portal_utils.send_error_rsp(data=get_syserr_format_string(syserr.SYSERR_ALBSVC_LOGIN_REQ_FAILED),

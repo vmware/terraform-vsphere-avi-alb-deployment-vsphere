@@ -1,5 +1,6 @@
 ---
-- hosts: localhost
+- name: Avi Cleanup Tasks
+  hosts: localhost
   connection: local
   gather_facts: no
   roles:
