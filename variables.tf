@@ -12,20 +12,11 @@ variable "register_controller" {
   type        = bool
   default     = "false"
 }
-variable "registration_jwt" {
-  description = "Registration JWT Token for Avi Cloud Services"
-  type        = string
-  default     = ""
-}
-variable "registration_email" {
-  description = "Registration email address for Avi Cloud Services"
-  type        = string
-  default     = ""
-}
-variable "registration_account_id" {
-  description = "Registration account ID for Avi Cloud Services"
-  type        = string
-  default     = ""
+variable "registration_settings" {
+  description = "Registration settings for Avi Cloud Services. The Long Organization ID (organization_id) can be found from https://console.cloud.vmware.com/csp/gateway/portal/#/organization/info. The jwt_token can be retrieved at https://portal.avipulse.vmware.com/portal/controller/auth/cspctrllogin"
+  sensitive   = false
+  type        = object({ jwt_token = string, email = string, organization_id = string })
+  default     = { jwt_token = "", email = "", organization_id = "" }
 }
 variable "create_roles" {
   description = "This variable controls the creation of Avi specific vSphere Roles for the Avi Controller to use. When set to false these roles should already be created and assigned to the vSphere account used by the Avi Controller."
