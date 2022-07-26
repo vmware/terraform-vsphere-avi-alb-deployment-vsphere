@@ -113,6 +113,10 @@ resource "null_resource" "ansible_provisioner" {
     destination = "/home/admin/avi_pulse_registration.py"
   }
   provisioner "file" {
+    source      = "${path.module}/files/views_albservices.patch"
+    destination = "/home/admin/views_albservices.patch"
+  }
+  provisioner "file" {
     content = templatefile("${path.module}/files/avi-vsphere-all-in-one-play.yml.tpl",
     local.cloud_settings)
     destination = "/home/admin/avi-vsphere-all-in-one-play.yml"
@@ -123,8 +127,9 @@ resource "null_resource" "ansible_provisioner" {
     destination = "/home/admin/avi-cloud-services-registration.yml"
   }
   provisioner "file" {
-    source      = "${path.module}/files/views_albservices.patch"
-    destination = "/home/admin/views_albservices.patch"
+    content = templatefile("${path.module}/files/avi-patch-upgrade.yml.tpl",
+    local.cloud_settings)
+    destination = "/home/admin/avi-patch-upgrade.yml"
   }
   provisioner "file" {
     content = templatefile("${path.module}/files/avi-cleanup.yml.tpl",
