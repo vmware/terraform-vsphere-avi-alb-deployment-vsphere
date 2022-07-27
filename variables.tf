@@ -91,6 +91,11 @@ variable "configure_gslb" {
   type        = bool
   default     = "false"
 }
+variable "gslb_se_size" {
+  description = "The CPU, Memory, Disk Size of the Service Engines. The default is 2 vCPU, 8 GB RAM, and a 30 GB Disk per Service Engine. Syntax [\"cpu_cores\", \"memory_in_GB\", \"disk_size_in_GB\"]"
+  type        = list(string)
+  default     = ["2", "8", "30"]
+}
 variable "gslb_site_name" {
   description = "The name of the GSLB site the deployed Controller(s) will be a member of."
   type        = string
