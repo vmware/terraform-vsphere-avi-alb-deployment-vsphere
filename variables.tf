@@ -117,9 +117,9 @@ variable "additional_gslb_sites" {
   default     = [{ name = "", ip_address_list = [""], dns_vs_name = "" }]
 }
 variable "create_gslb_se_group" {
-  description = "Create a SE group for GSLB. This option only applies when configure_gslb is set to true"
+  description = "Create a SE group for GSLB. The gslb_site_name variable must also be configured"
   type        = bool
-  default     = "true"
+  default     = "false"
 }
 variable "vsphere_datacenter" {
   description = "The vSphere Datacenter that the Avi Controller(s) will be deployed"

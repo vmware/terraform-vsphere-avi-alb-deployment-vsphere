@@ -109,7 +109,12 @@
             image_uuid: "{{ image_list.obj.results[image_index|int].uuid }}"
             system: true
             skip_warnings: true
-        when: upgrade == "system"
+        when: upgrade_type == "system"
+        until: system_upgrade is not failed
+        retries: 30
+        delay: 5
+        register: system_upgrade
+
       - name: Patch Upgrade
         avi_api_session:
           avi_credentials: "{{ avi_credentials }}"
@@ -122,5 +127,9 @@
             skip_warnings: true
             controller_patch_uuid: "{{ image_list.obj.results[image_index|int].uuid }}"
             se_patch_uuid: "{{ image_list.obj.results[image_index|int].uuid }}"
-        when: upgrade == "patch"
+        when: upgrade_type == "patch"
+        until: patch_upgrade is not failed
+        retries: 60
+        delay: 10
+        register: patch_upgrade
       when: image_list_comparison == "1"

@@ -17,12 +17,8 @@ locals {
     email_config                    = var.email_config
     name_prefix                     = var.name_prefix
     vcenter_folder                  = var.vm_folder
-    se_cpu                          = var.se_size[0]
-    se_memory                       = var.se_size[1]
-    se_disk                         = var.se_size[2]
-    gslb_se_cpu                     = var.gslb_se_size[0]
-    gslb_se_memory                  = var.gslb_se_size[1]
-    gslb_se_disk                    = var.gslb_se_size[2]
+    se_size                         = var.se_size
+    gslb_se_size                    = var.gslb_se_size
     controller_ha                   = var.controller_ha
     register_controller             = var.register_controller
     registration_jwt                = var.registration_settings.jwt_token

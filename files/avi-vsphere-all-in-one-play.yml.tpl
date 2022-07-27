@@ -32,9 +32,10 @@
     ansible_become_password: "{{ password }}"
     name_prefix: ${name_prefix}
     vcenter_folder: ${vcenter_folder}
-    se_cpu: ${se_cpu}
-    se_memory: ${se_memory}
-    se_disk: ${se_disk}
+    se_size:
+      cpu: ${se_size[0]}
+      memory: ${se_size[1]}
+      disk: ${se_size[2]}
     se_ha_mode: ${se_ha_mode}
     controller_ha: ${controller_ha}
 %{ if configure_ipam_profile ~}
@@ -64,6 +65,17 @@
     gslb_site_name: ${gslb_site_name}
     additional_gslb_sites:
       ${ indent(6, yamlencode(additional_gslb_sites))}
+    gslb_se_size:
+      cpu: ${gslb_se_size[0]}
+      memory: ${gslb_se_size[1]}
+      disk: ${gslb_se_size[2]}
+%{ endif ~}
+%{ if create_gslb_se_group && configure_gslb != "true" ~}
+    gslb_site_name: ${gslb_site_name}
+    gslb_se_size:
+      cpu: ${gslb_se_size[0]}
+      memory: ${gslb_se_size[1]}
+      disk: ${gslb_se_size[2]}
 %{ endif ~}
   tasks:
     - name: Wait for Controller to become ready
@@ -252,9 +264,9 @@
           max_se: "10"
           se_name_prefix: "{{ name_prefix }}"
           vcenter_folder: "{{ vcenter_folder }}"
-          vcpus_per_se: "{{ se_cpu }}"
-          memory_per_se: "{{ se_memory * 1024 }}"
-          disk_per_se: "{{ se_disk }}"
+          vcpus_per_se: "{{ se_size.cpu }}"
+          memory_per_se: "{{ se_size.memory * 1024 }}"
+          disk_per_se: "{{ se_size.disk }}"
           realtime_se_metrics:
             duration: "10080"
             enabled: true
@@ -278,9 +290,9 @@
           max_se: "10"
           se_name_prefix: "{{ name_prefix }}"
           vcenter_folder: "{{ vcenter_folder }}"
-          vcpus_per_se: "{{ se_cpu }}"
-          memory_per_se: "{{ se_memory * 1024 }}"
-          disk_per_se: "{{ se_disk }}"
+          vcpus_per_se: "{{ se_size.cpu }}"
+          memory_per_se: "{{ se_size.memory * 1024 }}"
+          disk_per_se: "{{ se_size.disk }}"
           realtime_se_metrics:
             duration: "10080"
             enabled: true
@@ -303,9 +315,9 @@
           max_se: "2"
           se_name_prefix: "{{ name_prefix }}"
           vcenter_folder: "{{ vcenter_folder }}"
-          vcpus_per_se: "{{ se_cpu }}"
-          memory_per_se: "{{ se_memory * 1024 }}"
-          disk_per_se: "{{ se_disk }}"
+          vcpus_per_se: "{{ se_size.cpu }}"
+          memory_per_se: "{{ se_size.memory * 1024 }}"
+          disk_per_se: "{{ se_size.disk }}"
           realtime_se_metrics:
             duration: "10080"
             enabled: true
@@ -392,7 +404,7 @@
           add:
             dns_provider_ref: "{{ create_dns.obj.url }}"
 %{ endif ~}
-%{ if configure_gslb ~}
+%{ if configure_gslb || create_gslb_se_group ~}
 
     - name: Configure GSLB SE-Group
       avi_api_session:
@@ -410,11 +422,11 @@
           max_se: "4"
           max_vs_per_se: "1"
           extra_shared_config_memory: 2000
-          se_name_prefix: "{{ gslb_site_name }}"
+          se_name_prefix: "{{ name_prefix }}{{ gslb_site_name }}"
           vcenter_folder: "{{ vcenter_folder }}"
-          vcpus_per_se: "{{ gslb_se_cpu }}"
-          memory_per_se: "{{ gslb_se_memory * 1024 }}"
-          disk_per_se: "{{ gslb_se_disk }}"
+          vcpus_per_se: "{{ gslb_se_size.cpu }}"
+          memory_per_se: "{{ gslb_se_size.memory * 1024 }}"
+          disk_per_se: "{{ gslb_se_size.disk }}"
           realtime_se_metrics:
             duration: "60"
             enabled: true
@@ -431,7 +443,7 @@
         data:
           east_west_placement: false
           cloud_ref: "{{ avi_cloud.obj.url }}"
-%{ if configure_gslb ~}
+%{ if configure_gslb || create_gslb_se_group ~}
           se_group_ref: "{{ gslb_se_group.obj.url }}"
 %{ endif ~}
           vip:
@@ -488,7 +500,7 @@
           application_profile_ref: /api/applicationprofile?name=System-DNS
           network_profile_ref: /api/networkprofile?name=System-UDP-Per-Pkt
           analytics_profile_ref: /api/analyticsprofile?name=System-Analytics-Profile
-          %{ if configure_gslb && create_gslb_se_group }
+          %{ if configure_gslb || create_gslb_se_group }
           se_group_ref: "{{ gslb_se_group.obj.url }}"
           %{ endif}
           cloud_ref: "{{ avi_cloud.obj.url }}"
@@ -509,7 +521,7 @@
         tenant: admin
         dns_virtualservice_refs: "{{ dns_vs.obj.url }}"
 %{ endif ~}
-%{ if configure_gslb && gslb_site_name != "" ~}
+%{ if configure_gslb ~}
 
     - name: GSLB Config | Verify Cluster UUID
       avi_api_session:
@@ -647,7 +659,7 @@
               ip:
                 type: V4
                 addr: "{{ controller_ip[2] }}"
-        name: "cluster01"
+        name: "{{ name_prefix }}-cluster"
         tenant_uuid: "admin"
       until: cluster_config is not failed
       retries: 10
