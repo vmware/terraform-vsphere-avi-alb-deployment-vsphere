@@ -525,6 +525,12 @@
             ip_addresses:
               - type: "V4"
                 addr: "{{ controller_ip[0] }}"
+%{ if controller_ha ~}
+              - type: "V4"
+                addr: "{{ controller_ip[1] }}"
+              - type: "V4"
+                addr: "{{ controller_ip[2] }}"
+%{ endif ~}
             enabled: True
             member_type: "GSLB_ACTIVE_MEMBER"
             port: 443
