@@ -178,6 +178,8 @@ module "avi_controller_east" {
   dns_service_domain              = "domain.net"
   configure_dns_vs                = "true"
   dns_vs_settings                 = { auto_allocate_ip = "true", vs_ip = "", portgroup = "PORTGROUP", network = "100.64.230.0/24", type = "V4" }
+  create_gslb_se_group            = "true"
+  gslb_site_name                  = "East1"
 }
 
 
