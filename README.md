@@ -103,33 +103,33 @@ module "avi_controller_west" {
   source  = "slarimore02/avi-controller-vsphere/vsphere"
   version = "1.0.x"
   
-  controller_default_password = "PASSWORD"
-  avi_version                 = "20.1.5"
-  controller_password         = "NEWPASSWORD"
-  controller_ha               = "true"
-  create_roles                = "true"
-  vsphere_datacenter          = "DATACENTER"
-  content_library             = "CONTENT_LIBRARY_NAME"
-  vm_template                 = "controller-20.1.5-9148"
-  vm_datastore                = "DATASTORE"
-  name_prefix                 = "PREFIX"
-  dns_servers                 = [{ addr = "8.8.4.4", type = "V4" }, { addr = "8.8.8.8", type = "V4" }]
-  dns_search_domain           = "vmware.com"
-  ntp_servers                 = [{ "addr": "0.us.pool.ntp.org","type": "DNS" },{ "addr": "1.us.pool.ntp.org","type": "DNS" },{ "addr": "2.us.pool.ntp.org", "type": "DNS" },{ "addr": "3.us.pool.ntp.org", "type": "DNS" }]
-  se_mgmt_portgroup           = "SE_PORTGROUP"
-  se_mgmt_network             = { network = "192.168.110.0/24", gateway = "192.168.110.1", type = "V4", static_pool = ["192.168.110.100", "192.168.110.200"] }
-  controller_mgmt_portgroup   = "MGMT_PORTGROUP"
-  compute_cluster             = "CLUSTER"
-  vm_folder                   = "FOLDER"
-  vsphere_user                = "USERNAME"
-  vsphere_avi_user            = "USERNAME"
-  vsphere_avi_password        = "PASSWORD"
-  vsphere_password            = "PASSWORD"
-  vsphere_server              = "VCENTER_ADDRESS"
-  controller_ip               = ["192.168.110.10"]
-  controller_netmask          = "24"
-  controller_gateway          = "192.168.110.1"
-  configure_ipam_profile      = "true"
+  controller_default_password     = "PASSWORD"
+  avi_version                     = "20.1.5"
+  controller_password             = "NEWPASSWORD"
+  controller_ha                   = "true"
+  create_roles                    = "true"
+  vsphere_datacenter              = "DATACENTER"
+  content_library                 = "CONTENT_LIBRARY_NAME"
+  vm_template                     = "controller-20.1.5-9148"
+  vm_datastore                    = "DATASTORE"
+  name_prefix                     = "PREFIX"
+  dns_servers                     = [{ addr = "8.8.4.4", type = "V4" }, { addr = "8.8.8.8", type = "V4" }]
+  dns_search_domain               = "vmware.com"
+  ntp_servers                     = [{ "addr": "0.us.pool.ntp.org","type": "DNS" },{ "addr": "1.us.pool.ntp.org","type": "DNS" },{ "addr": "2.us.pool.ntp.org", "type": "DNS" },{ "addr": "3.us.pool.ntp.org", "type": "DNS" }]
+  se_mgmt_portgroup               = "SE_PORTGROUP"
+  se_mgmt_network                 = { network = "192.168.110.0/24", gateway = "192.168.110.1", type = "V4", static_pool = ["192.168.110.100", "192.168.110.200"] }
+  controller_mgmt_portgroup       = "MGMT_PORTGROUP"
+  compute_cluster                 = "CLUSTER"
+  vm_folder                       = "FOLDER"
+  vsphere_user                    = "USERNAME"
+  vsphere_avi_user                = "USERNAME"
+  vsphere_avi_password            = "PASSWORD"
+  vsphere_password                = "PASSWORD"
+  vsphere_server                  = "VCENTER_ADDRESS"
+  controller_ip                   = ["192.168.110.10"]
+  controller_netmask              = "24"
+  controller_gateway              = "192.168.110.1"
+  configure_ipam_profile          = "true"
   ipam_networks                   = [{ portgroup = "PORTGROUP", network = "100.64.220.0/24", type = "V4", static_pool = ["100.64.220.20", "100.64.220.45"] }]
   configure_dns_profile           = "true"
   dns_service_domain              = "domain.net"
@@ -173,13 +173,13 @@ module "avi_controller_east" {
   controller_netmask          = "24"
   controller_gateway          = "192.168.120.1"
   configure_ipam_profile      = "true"
-  ipam_networks                   = [{ portgroup = "PORTGROUP", network = "100.64.230.0/24", type = "V4", static_pool = ["100.64.230.20", "100.64.230.45"] }]
-  configure_dns_profile           = "true"
-  dns_service_domain              = "domain.net"
-  configure_dns_vs                = "true"
-  dns_vs_settings                 = { auto_allocate_ip = "true", vs_ip = "", portgroup = "PORTGROUP", network = "100.64.230.0/24", type = "V4" }
-  create_gslb_se_group            = "true"
-  gslb_site_name                  = "East1"
+  ipam_networks               = [{ portgroup = "PORTGROUP", network = "100.64.230.0/24", type = "V4", static_pool = ["100.64.230.20", "100.64.230.45"] }]
+  configure_dns_profile       = "true"
+  dns_service_domain          = "domain.net"
+  configure_dns_vs            = "true"
+  dns_vs_settings             = { auto_allocate_ip = "true", vs_ip = "", portgroup = "PORTGROUP", network = "100.64.230.0/24", type = "V4" }
+  create_gslb_se_group        = "true"
+  gslb_site_name              = "East1"
 }
 
 
