@@ -112,7 +112,7 @@ variable "additional_gslb_sites" {
   default     = [{ name = "", ip_address_list = [""], dns_vs_name = "" }]
 }
 variable "create_gslb_se_group" {
-  description = "Create a SE group for GSLB. The gslb_site_name variable must also be configured"
+  description = "Create a SE group for GSLB. The gslb_site_name variable must also be configured. This variable should be set to true for the follower GSLB sites. When configure_gslb is set to true a SE group will be created automatically"
   type        = bool
   default     = "false"
 }
