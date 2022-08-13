@@ -8,8 +8,9 @@
   roles:
     - role: avinetworks.avisdk
   vars:
+    upgrade_file_uri: ${avi_upgrade.upgrade_file_uri}
     upgrade_type: patch
-    upgrade_file_url: "{{ upgrade_file_uri | default('${upgrade_file_uri}') }}"
+    upgrade_file_url: "{{ upgrade_file_uri }}"
     upgrade_file_location: "{{ upgrade_file_path | default('/tmp/controller.pkg') }}"
     avi_credentials:
         controller: "{{ controller_ip[0] }}"
@@ -26,22 +27,8 @@
     ansible_become: yes
     ansible_become_password: "{{ password }}"  
   tasks:
-%{ if controller_ha && register_controller == false  ~}
-    - name: Pause for 7 minutes for Cluster to form
-      ansible.builtin.pause:
-        minutes: 7
-    
-    - name: Wait for Avi Cluster to be ready
-      avi_api_session:
-        avi_credentials: "{{ avi_credentials }}"
-        http_method: get
-        path: "cluster/runtime"
-      until: cluster_check is not failed
-      retries: 60
-      delay: 10
-      register: cluster_check
-
-    - name: Wait for Avi Cluster to be ready
+%{ if controller_ha ~}
+    - name: Ensure Avi Cluster is ready
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
         http_method: get
@@ -50,6 +37,7 @@
       retries: 60
       delay: 10
       register: cluster_runtime
+      
 %{ endif ~}
     - name: Download Avi Update Package
       get_url:

@@ -1,3 +1,5 @@
+# Copyright 2022 VMware, Inc.
+# SPDX-License-Identifier: Apache-2.0
 ---
 - name: Avi Cloud Services Registration
   hosts: localhost
@@ -19,26 +21,14 @@
     ansible_become: yes
     ansible_become_password: "{{ password }}"
     name_prefix: ${name_prefix}
-    registration_account_id: ${registration_account_id}
-    registration_email: ${registration_email}
-    registration_jwt: ${registration_jwt}
+    register_controller:
+      ${ indent(6, yamlencode(register_controller))}
+%{ if configure_gslb || create_gslb_se_group ~}
+    gslb_site_name: ${gslb_site_name}
+%{ endif ~}
   tasks:
 %{ if controller_ha ~}
-    - name: Pause for 7 minutes for Cluster to form
-      ansible.builtin.pause:
-        minutes: 7
-    
-    - name: Wait for Avi Cluster to be ready
-      avi_api_session:
-        avi_credentials: "{{ avi_credentials }}"
-        http_method: get
-        path: "cluster/runtime"
-      until: cluster_check is not failed
-      retries: 60
-      delay: 10
-      register: cluster_check
-
-    - name: Wait for Avi Cluster to be ready
+    - name: Ensure Avi Cluster is ready
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
         http_method: get
@@ -53,11 +43,16 @@
       vmware.alb.avi_pulse_registration:
         avi_credentials: "{{ avi_credentials }}"
         state: present
-        jwt_token: "{{ registration_jwt }}"
+        jwt_token: "{{ register_controller.jwt_token }}"
+%{ if configure_gslb || create_gslb_se_group ~}
+        name: "{{ name_prefix }}-{{ gslb_site_name }}-cluster"
+        description: "{{ name_prefix }} {{ gslb_site_name }} Cluster"
+%{ else ~}
         name: "{{ name_prefix }}-cluster"
         description: "{{ name_prefix }} Cluster"
-        email: "{{ registration_email }}"
-        account_id: "{{ registration_account_id }}"
+%{ endif ~}
+        email: "{{ register_controller.email }}"
+        account_id: "{{ register_controller.organization_id }}"
         optins: present
         enable_pulse_case_management: True
         case_config:

@@ -1,3 +1,5 @@
+# Copyright 2022 VMware, Inc.
+# SPDX-License-Identifier: Apache-2.0
 ---
 - name: Avi Cleanup Tasks
   hosts: localhost
@@ -19,10 +21,11 @@
     name_prefix: ${name_prefix}
     api_version: ${avi_version}
     tenant_name: "admin"
-    registration_account_id: ${registration_account_id}
-    registration_email: ${registration_email}
-    registration_jwt: ${registration_jwt}
-    
+    register_controller:
+      ${ indent(6, yamlencode(register_controller))}
+%{ if configure_gslb || create_gslb_se_group ~}
+    gslb_site_name: ${gslb_site_name}
+%{ endif ~}
   tasks:
     - name: Remove all DNS Service Refs from System Configuration
       avi_api_session:
@@ -87,16 +90,21 @@
         path: "serviceengine/{{ item.uuid }}"
       loop: "{{ se_results.obj.results }}"
 
-%{ if register_controller ~}
+%{ if register_controller.enabled ~}
     - name: Cloud Services Deregistration
       vmware.alb.avi_pulse_registration:
         avi_credentials: "{{ avi_credentials }}"
         state: absent
-        jwt_token: "{{ registration_jwt }}"
+        jwt_token: "{{ register_controller.jwt_token }}"
+%{ if configure_gslb || create_gslb_se_group ~}
+        name: "{{ name_prefix }}-{{ gslb_site_name }}-cluster"
+        description: "{{ name_prefix }} {{ gslb_site_name }} Cluster"
+%{ else ~}
         name: "{{ name_prefix }}-cluster"
         description: "{{ name_prefix }} Cluster"
-        email: "{{ registration_email }}"
-        account_id: "{{ registration_account_id }}"
+%{ endif ~}
+        email: "{{ register_controller.email }}"
+        account_id: "{{ register_controller.organization_id }}"
         optins: present
         enable_pulse_case_management: True
         case_config:

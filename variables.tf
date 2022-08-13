@@ -102,12 +102,12 @@ variable "gslb_domains" {
   default     = [""]
 }
 variable "configure_gslb_additional_sites" {
-  description = "Configure Additional GSLB Sites. The additional_gslb_sites, gslb_site_name, gslb_domains, and configure_dns_vs variables must also be set. Optionally the additional_gslb_sites variable can be used to add active GSLB sites"
+  description = "Configure additional GSLB Sites. The additional_gslb_sites, gslb_site_name, gslb_domains, and configure_dns_vs variables must also be set"
   type        = bool
   default     = "false"
 }
 variable "additional_gslb_sites" {
-  description = "The Names and IP addresses of the GSLB Sites that will be configured."
+  description = "The Names and IP addresses of the GSLB Sites that will be configured. If the Site is a controller cluster the ip_address_list should have the ip address of each controller. The configure_gslb_additional_sites variable must also be set to true for the sites to be added"
   type        = list(object({ name = string, ip_address_list = list(string), dns_vs_name = string }))
   default     = [{ name = "", ip_address_list = [""], dns_vs_name = "" }]
 }
