@@ -84,15 +84,6 @@ output "controllers" {
   value = module.avi-controller-vsphere.controllers
 }
 ```
-
-## VMware User Role for Avi
-Optionally the vSphere Roles detailed in https://avinetworks.com/docs/latest/vmware-user-role can be created and associated with an vSphere Account. 
-To enable this feature set the create_roles variable to "true". If set to "false" these roles should have already been created and assigned to the account that Avi will use.
- 
-When the create_roles variable is set to "true" the following command should be ran to remove the avi_root role and permissions before running a terraform destroy. The avi_root role can be cleaned up manually by navigating to the Administration > Access Control > Roles section and selecting delete for the avi_root role. This is due to a bug in the vSphere provider - https://github.com/hashicorp/terraform-provider-vsphere/issues/1400
-```bash  
-terraform state rm vsphere_entity_permissions.avi_root vsphere_role.avi_root
-```
 ## GSLB Deployment Example
 ```hcl
 terraform {
@@ -179,9 +170,8 @@ module "avi_controller_east" {
   configure_dns_vs            = "true"
   dns_vs_settings             = { auto_allocate_ip = "true", vs_ip = "", portgroup = "PORTGROUP", network = "100.64.230.0/24", type = "V4" }
   create_gslb_se_group        = "true"
-  gslb_site_name              = "East1"
+  gslb_site_name              = "East"
 }
-
 
 output "controllers_west" {
   value = module.avi_controller_west.controllers
@@ -193,6 +183,16 @@ output "controllers_east" {
   value = module.avi_controller_east.controllers
 }
 ```
+
+## VMware User Role for Avi
+Optionally the vSphere Roles detailed in https://avinetworks.com/docs/latest/vmware-user-role can be created and associated with an vSphere Account. 
+To enable this feature set the create_roles variable to "true". If set to "false" these roles should have already been created and assigned to the account that Avi will use.
+ 
+When the create_roles variable is set to "true" the following command should be ran to remove the avi_root role and permissions before running a terraform destroy. The avi_root role can be cleaned up manually by navigating to the Administration > Access Control > Roles section and selecting delete for the avi_root role. This is due to a bug in the vSphere provider - https://github.com/hashicorp/terraform-provider-vsphere/issues/1400
+```bash  
+terraform state rm vsphere_entity_permissions.avi_root vsphere_role.avi_root
+```
+
 ## Controller Sizing
 The controller_size variable can be used to determine the vCPU and Memory resources allocated to the Avi Controller. There are 3 available sizes for the Controller as documented below:
 
