@@ -677,7 +677,7 @@
       delay: 5
       register: cluster_config
 %{ endif ~}
-%{ if register_controller ~}
+%{ if register_controller.enabled ~}
 
     - name: Install Avi Collection
       shell: ansible-galaxy collection install vmware.alb -p /home/admin/.ansible/collections
