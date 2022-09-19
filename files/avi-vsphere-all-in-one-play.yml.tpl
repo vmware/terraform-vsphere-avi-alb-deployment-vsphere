@@ -405,7 +405,7 @@
             type: IPAMDNS_TYPE_INTERNAL_DNS
             internal_profile:
               dns_service_domain:
-              - domain_name: "{{ dns_service_domain }}"
+              - domain_name: "{{ dns_domain }}"
                 pass_through: true
               ttl: 30
           register: create_dns
@@ -506,7 +506,7 @@
               dns_info:
               - type: DNS_RECORD_A
                 algorithm: DNS_RECORD_RESPONSE_CONSISTENT_HASH
-                fqdn: "dns.{{ dns_service_domain }}"
+                fqdn: "dns.{{ dns_domain }}"
               name: vsvip-DNS-VS-Default-Cloud
           register: vsvip_results
 
