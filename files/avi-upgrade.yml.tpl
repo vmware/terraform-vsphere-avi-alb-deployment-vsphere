@@ -27,18 +27,6 @@
     ansible_become: yes
     ansible_become_password: "{{ password }}"  
   tasks:
-%{ if controller_ha ~}
-    - name: Ensure Avi Cluster is ready
-      avi_api_session:
-        avi_credentials: "{{ avi_credentials }}"
-        http_method: get
-        path: "cluster/runtime"
-      until: cluster_runtime.obj.cluster_state.state == "CLUSTER_UP_HA_ACTIVE"
-      retries: 60
-      delay: 10
-      register: cluster_runtime
-      
-%{ endif ~}
     - name: Download Avi Update Package
       get_url:
         url: "{{ upgrade_file_url }}"
