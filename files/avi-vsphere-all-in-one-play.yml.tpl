@@ -726,7 +726,7 @@
             path: /home/admin/avi_pulse_registration.py
             state: absent
 
-    %{ if split(".", avi_version)[0] == "21" && split(".", avi_version)[2] == "4"  ~}
+%{ if split(".", avi_version)[0] == "21" && split(".", avi_version)[2] == "4"  ~}
         - name: Patch file
           shell: patch --directory /opt/avi/python/bin/portal/api/ < /home/admin/views_albservices.patch
         
