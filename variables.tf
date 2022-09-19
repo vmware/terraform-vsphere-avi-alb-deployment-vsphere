@@ -51,7 +51,7 @@ variable "controller_size" {
     error_message = "Acceptable values are small, medium, or large."
   }
 }
-variable "configure_cloud" {
+variable "configure_controller" {
   description = "Configure the Avi Cloud via Ansible after controller deployment. If not set to true this must be done manually with the desired config"
   type        = bool
   default     = "true"

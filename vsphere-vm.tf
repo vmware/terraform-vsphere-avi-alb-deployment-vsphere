@@ -10,7 +10,6 @@ locals {
     configure_se_mgmt_network       = var.configure_se_mgmt_network
     se_mgmt_network                 = var.configure_se_mgmt_network ? var.se_mgmt_network : null
     avi_version                     = var.avi_version
-    configure_cloud                 = var.configure_cloud
     dns_servers                     = var.dns_servers
     dns_search_domain               = var.dns_search_domain
     ntp_servers                     = var.ntp_servers
@@ -133,11 +132,14 @@ resource "null_resource" "ansible_provisioner" {
     destination = "/home/admin/avi-cleanup.yml"
   }
   provisioner "remote-exec" {
-    inline = var.vsphere_avi_user == null ? [
+    inline = var.configure_controller ? var.vsphere_avi_user == null ? [
       "ansible-playbook avi-vsphere-all-in-one-play.yml -e password=${var.controller_password} -e vsphere_password=${var.vsphere_password} 2> ansible-error.log | tee ansible-playbook.log",
       "echo Controller Configuration Completed"
       ] : [
       "ansible-playbook avi-vsphere-all-in-one-play.yml -e password=${var.controller_password} -e vsphere_password=${var.vsphere_avi_password} 2> ansible-error.log | tee ansible-playbook.log",
+      "echo Controller Configuration Completed"
+      ] : [
+      "ansible-playbook avi-vsphere-all-in-one-play.yml -e password=${var.controller_password} --tags register_controller 2> ansible-error.log | tee ansible-playbook.log",
       "echo Controller Configuration Completed"
     ]
   }

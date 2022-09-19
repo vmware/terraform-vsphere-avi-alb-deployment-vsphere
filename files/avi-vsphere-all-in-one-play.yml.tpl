@@ -117,7 +117,6 @@
         backup_passphrase: "{{ password }}"
         upload_to_remote_host: false
 
-%{ if configure_cloud ~}
     - name: Wait for connection to vCenter to become ready
       wait_for:
         host: "{{ vsphere_server }}"
@@ -644,7 +643,7 @@
 %{ endfor ~}
                 dns_vses:
                   - dns_vs_uuid: "{{ dns_vs_verify.obj.results.0.uuid }}"
-%{ endfor ~}%{ endif ~}%{ endif ~}
+%{ endfor ~}%{ endif ~}
 %{ if controller_ha ~}
 
     - name: Controller Cluster Configuration
