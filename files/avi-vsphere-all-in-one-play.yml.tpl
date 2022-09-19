@@ -598,7 +598,6 @@
           retries: 30
           delay: 5
           register: gslb_results
-%{ endif ~}
       when: configure_gslb == true
       tags: configure_gslb
 
