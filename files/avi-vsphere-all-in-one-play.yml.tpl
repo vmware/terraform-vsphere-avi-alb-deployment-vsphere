@@ -189,7 +189,8 @@
                   addr: "{{ se_mgmt_network.network | ipaddr('network') }}"
                   type: "{{ se_mgmt_network.type }}"
                 mask: "{{ se_mgmt_network.network | ipaddr('prefix') }}"
-    %{ if split(".", avi_version)[0] != "22" }
+
+%{ if split(".", avi_version)[0] != "22" ~}
     - name: Wait for vCenter Discovery to complete
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -209,7 +210,8 @@
       retries: 60
       delay: 10
       register: cloudplacement
-    %{ endif }
+
+%{ endif ~}
     - name: Update SE Mgmt Network Object with Static Pool
       avi_network:
         avi_credentials: "{{ avi_credentials }}"
@@ -254,9 +256,9 @@
               type: "{{ se_mgmt_network.type }}"
             route_id: 1
       register: mgmt_network_default_route
+
 %{ endif ~} 
 %{ if se_ha_mode == "active/active" ~}
-
     - name: Configure SE-Group
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -280,9 +282,9 @@
           realtime_se_metrics:
             duration: "10080"
             enabled: true
+
 %{ endif ~}
 %{ if se_ha_mode == "n+m" ~}
-
     - name: Configure SE-Group
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -306,9 +308,9 @@
           realtime_se_metrics:
             duration: "10080"
             enabled: true
+
 %{ endif ~}
 %{ if se_ha_mode == "active/standby" ~}
-
     - name: Configure SE-Group
       avi_api_session:
         avi_credentials: "{{ avi_credentials }}"
@@ -331,6 +333,7 @@
           realtime_se_metrics:
             duration: "10080"
             enabled: true
+
 %{ endif ~}
     - name: Configure IPAM Profile
       block:
