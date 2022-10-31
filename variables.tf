@@ -62,59 +62,44 @@ variable "configure_ipam_profile" {
   default     = "false"
 }
 variable "configure_dns_profile" {
-  description = "Configure Avi DNS Profile for DNS Record Creation for Virtual Services. If set to true the dns_service_domain variable must also be set"
-  type        = bool
-  default     = "false"
-}
-variable "dns_service_domain" {
-  description = "The DNS Domain that will be available for Virtual Services. Avi will be the Authorative Nameserver for this domain and NS records may need to be created pointing to the Avi Service Engine addresses. An example is demo.avi.com"
-  type        = string
-  default     = null
+  description = "Configure a DNS Profile for DNS Record Creation for Virtual Services. The usable_domains is a list of domains that Avi will be the Authoritative Nameserver for and NS records may need to be created pointing to the Avi Service Engine addresses. Supported profiles for the type parameter are AWS or AVI"
+  type = object({
+    enabled        = bool,
+    type           = optional(string, "AVI"),
+    usable_domains = list(string),
+    ttl            = optional(string, "30"),
+    aws_profile    = optional(object({ iam_assume_role = string, region = string, vpc_id = string, access_key_id = string, secret_access_key = string }))
+  })
+  default = { enabled = false, type = "AVI", usable_domains = [] }
+  validation {
+    condition     = contains(["AWS", "AVI"], var.configure_dns_profile.type)
+    error_message = "Supported DNS Profile types are 'AWS' or 'AVI'"
+  }
 }
 variable "configure_dns_vs" {
-  description = "Create DNS Virtual Service. The configure_dns_profile and dns_vs_settings variables must also be set for the DNS VS to be created successfully."
-  type        = bool
-  default     = "false"
-}
-variable "dns_vs_settings" {
-  description = "The DNS Virtual Service settings. With the auto_allocate_ip option is set to \"true\" the VS IP address will be allocated via an IPAM profile. Valid options for type are V4 or V6. Example:{ auto_allocate_ip = \"true\", vs_ip = \"\", portgroup = \"dns-portgroup\", network = \"192.168.20.0/24\", type = \"V4\" }"
-  type        = object({ auto_allocate_ip = bool, vs_ip = string, portgroup = string, network = string, type = string })
-  default     = null
+  description = "Create Avi DNS Virtual Service. The subnet_name parameter must be an existing AWS Subnet. If the allocate_public_ip parameter is set to true a EIP will be allocated for the VS. The VS IP address will automatically be allocated via the AWS IPAM"
+  type = object({
+    enabled          = bool,
+    portgroup        = string,
+    network          = string,
+    auto_allocate_ip = optional(bool, true),
+    vs_ip            = optional(string)
+    type             = optional(string, "V4")
+  })
+  default = { enabled = "false", network = "", portgroup = "" }
 }
 variable "configure_gslb" {
-  description = "Configure GSLB. The gslb_site_name, gslb_domains, and configure_dns_vs variables must also be set. Optionally the additional_gslb_sites variable can be used to add active GSLB sites"
-  type        = bool
-  default     = "false"
-}
-variable "gslb_se_size" {
-  description = "The CPU, Memory, Disk Size of the Service Engines. The default is 2 vCPU, 8 GB RAM, and a 30 GB Disk per Service Engine. Syntax [\"cpu_cores\", \"memory_in_GB\", \"disk_size_in_GB\"]"
-  type        = list(string)
-  default     = ["2", "8", "30"]
-}
-variable "gslb_site_name" {
-  description = "The name of the GSLB site the deployed Controller(s) will be a member of."
-  type        = string
-  default     = ""
-}
-variable "gslb_domains" {
-  description = "A list of GSLB domains that will be configured"
-  type        = list(string)
-  default     = [""]
-}
-variable "configure_gslb_additional_sites" {
-  description = "Configure additional GSLB Sites. The additional_gslb_sites, gslb_site_name, gslb_domains, and configure_dns_vs variables must also be set"
-  type        = bool
-  default     = "false"
-}
-variable "additional_gslb_sites" {
-  description = "The Names and IP addresses of the GSLB Sites that will be configured. If the Site is a controller cluster the ip_address_list should have the ip address of each controller. The configure_gslb_additional_sites variable must also be set to true for the sites to be added"
-  type        = list(object({ name = string, ip_address_list = list(string), dns_vs_name = string }))
-  default     = [{ name = "", ip_address_list = [""], dns_vs_name = "" }]
-}
-variable "create_gslb_se_group" {
-  description = "Create a SE group for GSLB. The gslb_site_name variable must also be configured. This variable should be set to true for the follower GSLB sites. When configure_gslb is set to true a SE group will be created automatically"
-  type        = bool
-  default     = "false"
+  description = "Configures GSLB. In addition the configure_dns_vs variable must also be set for GSLB to be configured. See the GSLB Deployment README section for more information."
+  type = object({
+    enabled          = bool,
+    leader           = optional(bool, false),
+    site_name        = string,
+    domains          = optional(list(string)),
+    create_se_group  = optional(bool, true),
+    se_size          = optional(list(string), ["2", "8", "30"]),
+    additional_sites = optional(list(object({ name = string, ip_address_list = list(string) })))
+  })
+  default = { enabled = "false", site_name = "", domains = [""] }
 }
 variable "vsphere_datacenter" {
   description = "The vSphere Datacenter that the Avi Controller(s) will be deployed"

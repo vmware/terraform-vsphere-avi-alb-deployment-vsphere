@@ -23,9 +23,8 @@
     tenant_name: "admin"
     register_controller:
       ${ indent(6, yamlencode(register_controller))}
-%{ if configure_gslb || create_gslb_se_group ~}
-    gslb_site_name: ${gslb_site_name}
-%{ endif ~}
+    configure_gslb:
+        ${ indent(6, yamlencode(configure_gslb))}
   tasks:
     - name: Remove all DNS Service Refs from System Configuration
       avi_api_session:
@@ -96,9 +95,9 @@
         avi_credentials: "{{ avi_credentials }}"
         state: absent
         jwt_token: "{{ register_controller.jwt_token }}"
-%{ if configure_gslb || create_gslb_se_group ~}
-        name: "{{ name_prefix }}-{{ gslb_site_name }}-cluster"
-        description: "{{ name_prefix }} {{ gslb_site_name }} Cluster"
+%{ if configure_gslb.enabled ~}
+        name: "{{ name_prefix }}-{{ configure_gslb.site_name }}-cluster"
+        description: "{{ name_prefix }} {{ configure_gslb.site_name }} Cluster"
 %{ else ~}
         name: "{{ name_prefix }}-cluster"
         description: "{{ name_prefix }} Cluster"

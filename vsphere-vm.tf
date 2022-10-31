@@ -1,41 +1,33 @@
 locals {
   # Controller Settings used as Ansible Variables
   cloud_settings = {
-    vsphere_user                    = var.vsphere_avi_user == null ? var.vsphere_user : var.vsphere_avi_user
-    vsphere_server                  = var.vsphere_server
-    vm_datacenter                   = var.vsphere_datacenter
-    use_content_lib                 = var.se_use_content_lib
-    content_lib_name                = var.se_content_lib_name == null ? var.content_library : var.se_content_lib_name
-    se_mgmt_portgroup               = var.se_mgmt_portgroup
-    configure_se_mgmt_network       = var.configure_se_mgmt_network
-    se_mgmt_network                 = var.configure_se_mgmt_network ? var.se_mgmt_network : null
-    avi_version                     = var.avi_version
-    dns_servers                     = var.dns_servers
-    dns_search_domain               = var.dns_search_domain
-    ntp_servers                     = var.ntp_servers
-    email_config                    = var.email_config
-    name_prefix                     = var.name_prefix
-    vcenter_folder                  = var.vm_folder
-    se_size                         = var.se_size
-    gslb_se_size                    = var.gslb_se_size
-    controller_ha                   = var.controller_ha
-    register_controller             = var.register_controller
-    controller_ip                   = var.controller_ip
-    controller_names                = local.controller_names
-    configure_ipam_profile          = var.configure_ipam_profile
-    ipam_networks                   = var.configure_ipam_profile ? var.ipam_networks : null
-    configure_dns_profile           = var.configure_dns_profile
-    dns_service_domain              = var.dns_service_domain
-    configure_dns_vs                = var.configure_dns_vs
-    dns_vs_settings                 = var.dns_vs_settings
-    configure_gslb                  = var.configure_gslb
-    configure_gslb_additional_sites = var.configure_gslb_additional_sites
-    create_gslb_se_group            = var.create_gslb_se_group
-    gslb_site_name                  = var.gslb_site_name
-    gslb_domains                    = var.gslb_domains
-    additional_gslb_sites           = var.additional_gslb_sites
-    se_ha_mode                      = var.se_ha_mode
-    avi_upgrade                     = var.avi_upgrade
+    vsphere_user              = var.vsphere_avi_user == null ? var.vsphere_user : var.vsphere_avi_user
+    vsphere_server            = var.vsphere_server
+    vm_datacenter             = var.vsphere_datacenter
+    use_content_lib           = var.se_use_content_lib
+    content_lib_name          = var.se_content_lib_name == null ? var.content_library : var.se_content_lib_name
+    se_mgmt_portgroup         = var.se_mgmt_portgroup
+    configure_se_mgmt_network = var.configure_se_mgmt_network
+    se_mgmt_network           = var.configure_se_mgmt_network ? var.se_mgmt_network : null
+    avi_version               = var.avi_version
+    dns_servers               = var.dns_servers
+    dns_search_domain         = var.dns_search_domain
+    ntp_servers               = var.ntp_servers
+    email_config              = var.email_config
+    name_prefix               = var.name_prefix
+    vcenter_folder            = var.vm_folder
+    se_size                   = var.se_size
+    controller_ha             = var.controller_ha
+    register_controller       = var.register_controller
+    controller_ip             = var.controller_ip
+    controller_names          = local.controller_names
+    configure_ipam_profile    = var.configure_ipam_profile
+    ipam_networks             = var.configure_ipam_profile ? var.ipam_networks : null
+    configure_dns_profile     = var.configure_dns_profile
+    configure_dns_vs          = var.configure_dns_vs
+    configure_gslb            = var.configure_gslb
+    se_ha_mode                = var.se_ha_mode
+    avi_upgrade               = var.avi_upgrade
   }
   controller_sizes = {
     small  = [8, 24576]
@@ -103,54 +95,62 @@ resource "null_resource" "ansible_provisioner" {
     timeout  = "600s"
     password = var.controller_password
   }
+  provisioner "remote-exec" {
+    inline = ["mkdir ansible"]
+  }
   provisioner "file" {
     source      = "${path.module}/files/avi_pulse_registration.py"
-    destination = "/home/admin/avi_pulse_registration.py"
+    destination = "/home/admin/ansible/avi_pulse_registration.py"
   }
   provisioner "file" {
     source      = "${path.module}/files/views_albservices.patch"
-    destination = "/home/admin/views_albservices.patch"
+    destination = "/home/admin/ansible/views_albservices.patch"
   }
   provisioner "file" {
     content = templatefile("${path.module}/files/avi-vsphere-all-in-one-play.yml.tpl",
     local.cloud_settings)
-    destination = "/home/admin/avi-vsphere-all-in-one-play.yml"
+    destination = "/home/admin/ansible/avi-vsphere-all-in-one-play.yml"
   }
   provisioner "file" {
     content = templatefile("${path.module}/files/avi-cloud-services-registration.yml.tpl",
     local.cloud_settings)
-    destination = "/home/admin/avi-cloud-services-registration.yml"
+    destination = "/home/admin/ansible/avi-cloud-services-registration.yml"
   }
   provisioner "file" {
     content = templatefile("${path.module}/files/avi-upgrade.yml.tpl",
     local.cloud_settings)
-    destination = "/home/admin/avi-upgrade.yml"
+    destination = "/home/admin/ansible/avi-upgrade.yml"
   }
   provisioner "file" {
     content = templatefile("${path.module}/files/avi-cleanup.yml.tpl",
     local.cloud_settings)
-    destination = "/home/admin/avi-cleanup.yml"
+    destination = "/home/admin/ansible/avi-cleanup.yml"
   }
   provisioner "remote-exec" {
     inline = var.configure_controller ? var.vsphere_avi_user == null ? [
+      "cd ansible",
       "ansible-playbook avi-vsphere-all-in-one-play.yml -e password=${var.controller_password} -e vsphere_password=${var.vsphere_password} 2> ansible-error.log | tee ansible-playbook.log",
       "echo Controller Configuration Completed"
       ] : [
+      "cd ansible",
       "ansible-playbook avi-vsphere-all-in-one-play.yml -e password=${var.controller_password} -e vsphere_password=${var.vsphere_avi_password} 2> ansible-error.log | tee ansible-playbook.log",
       "echo Controller Configuration Completed"
       ] : [
+      "cd ansible",
       "ansible-playbook avi-vsphere-all-in-one-play.yml -e password=${var.controller_password} --tags register_controller 2> ansible-error.log | tee ansible-playbook.log",
       "echo Controller Configuration Completed"
     ]
   }
   provisioner "remote-exec" {
     inline = var.register_controller["enabled"] ? [
+      "cd ansible",
       "ansible-playbook avi-cloud-services-registration.yml -e password=${var.controller_password} 2>> ansible-error.log | tee -a ansible-playbook.log",
       "echo Controller Registration Completed"
     ] : ["echo Controller Registration Skipped"]
   }
   provisioner "remote-exec" {
     inline = var.avi_upgrade["enabled"] ? [
+      "cd ansible",
       "ansible-playbook avi-upgrade.yml -e password=${var.controller_password} -e upgrade_type=${var.avi_upgrade["upgrade_type"]} 2>> ansible-error.log | tee -a ansible-playbook.log",
       "echo Avi upgrade completed"
     ] : ["echo Avi upgrade skipped"]
