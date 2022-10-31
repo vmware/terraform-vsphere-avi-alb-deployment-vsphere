@@ -59,8 +59,7 @@
       - server:
           addr: "${item.addr}"
           type: ${item.type}
-%{ endfor ~}  
-    configure_dns_profile: ${configure_dns_profile}
+%{ endfor ~}
     configure_dns_profile:
       ${ indent(6, yamlencode(configure_dns_profile))}
     configure_dns_vs:
@@ -266,6 +265,8 @@
         vcpus_per_se: "{{ se_size.cpu }}"
         memory_per_se: "{{ se_size.memory * 1024 }}"
         disk_per_se: "{{ se_size.disk }}"
+        cpu_reserve: true
+        memory_reserve: true
         realtime_se_metrics:
           duration: "10080"
           enabled: true
@@ -288,6 +289,8 @@
         vcpus_per_se: "{{ se_size.cpu }}"
         memory_per_se: "{{ se_size.memory * 1024 }}"
         disk_per_se: "{{ se_size.disk }}"
+        cpu_reserve: true
+        memory_reserve: true
         realtime_se_metrics:
           duration: "10080"
           enabled: true
@@ -309,6 +312,8 @@
         vcpus_per_se: "{{ se_size.cpu }}"
         memory_per_se: "{{ se_size.memory * 1024 }}"
         disk_per_se: "{{ se_size.disk }}"
+        cpu_reserve: true
+        memory_reserve: true
         realtime_se_metrics:
           duration: "10080"
           enabled: true
@@ -376,11 +381,6 @@
 
     - name: Configure DNS Profile
       block:
-        - name: Create Empty List for dns_service_domain API field
-          set_fact:
-            dns_service_domain: []
-          when: configure_dns_profile.type == "AVI"
-
         - name: Build list for dns_service_domain API field
           set_fact:
             dns_service_domain: "{{ dns_service_domain | default([]) + [{'domain_name': domain, 'pass_through': 'true' }] }}"
@@ -458,9 +458,11 @@
             extra_shared_config_memory: 2000
             se_name_prefix: "{{ name_prefix }}{{ configure_gslb.site_name }}"
             vcenter_folder: "{{ vcenter_folder }}"
-            vcpus_per_se: "{{ gslb_se_size.cpu }}"
-            memory_per_se: "{{ gslb_se_size.memory * 1024 }}"
-            disk_per_se: "{{ gslb_se_size.disk }}"
+            vcpus_per_se: "{{ configure_gslb.se_size.0 }}"
+            memory_per_se: "{{ configure_gslb.se_size.1 | int * 1024 }}"
+            disk_per_se: "{{ configure_gslb.se_size.2 }}"
+            cpu_reserve: true
+            memory_reserve: true
             realtime_se_metrics:
               duration: "60"
               enabled: true
@@ -569,10 +571,6 @@
             http_method: get
             path: cluster
           register: cluster
-
-        - name: Create Empty List for controller ip_addresses API field
-          set_fact:
-            controller_ip_addresses: []
           
         - name: Build list for gslb ip_addresses API field
           set_fact:
@@ -580,11 +578,9 @@
           loop: "{{ controller_ip }}"
           loop_control:
             loop_var: ip
+            index_var: index
+          when: index < 3
 
-        - name: Create Empty List for dns_configs API field
-          set_fact:
-            gslb_domains: []
-          
         - name: Build list for dns_configs API field
           set_fact:
             gslb_domains: "{{ gslb_domains | default([]) + [{ 'domain_name': domain }] }}"

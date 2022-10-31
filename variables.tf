@@ -96,7 +96,7 @@ variable "configure_gslb" {
     site_name        = string,
     domains          = optional(list(string)),
     create_se_group  = optional(bool, true),
-    se_size          = optional(list(string), ["2", "8", "30"]),
+    se_size          = optional(list(number), [2, 8, 30]),
     additional_sites = optional(list(object({ name = string, ip_address_list = list(string) })))
   })
   default = { enabled = "false", site_name = "", domains = [""] }
@@ -215,9 +215,9 @@ variable "boot_disk_size" {
   }
 }
 variable "se_size" {
-  description = "The CPU, Memory, Disk Size of the Service Engines. The default is 1 vCPU, 2 GB RAM, and a 15 GB Disk per Service Engine. Syntax [\"cpu_cores\", \"memory_in_GB\", \"disk_size_in_GB\"]"
-  type        = list(string)
-  default     = ["1", "2", "15"]
+  description = "The CPU, Memory, Disk Size of the Service Engines. The default is 2 vCPU, 4 GB RAM, and a 20 GB Disk per Service Engine. Syntax [\"cpu_cores\", \"memory_in_GB\", \"disk_size_in_GB\"]"
+  type        = list(number)
+  default     = [2, 4, 20]
 }
 variable "se_ha_mode" {
   description = "The HA mode of the Service Engine Group. Possible values active/active, n+m, or active/standby"
