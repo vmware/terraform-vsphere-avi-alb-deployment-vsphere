@@ -92,7 +92,7 @@ The following is a description of the configure_gslb variable parameters and the
 | site_name   | Name of the GSLB site   | string
 | domains   | List of GSLB domains that will be configured | list(string)
 | create_se_group | Determines whether a g-dns SE group will be created        | bool
-| se_size   | The CPU (in Cores), Memory (in GB), and Disk (in GB) used for the Avi Service Engines | list(string)
+| se_size   | The CPU (in Cores), Memory (in GB), and Disk (in GB) used for the Avi Service Engines | list(number)
 | additional_sites   | Additional sites that will be configured. This parameter should only be set for the primary GSLB site | string
 
 The example below shows a GSLB deployment with 2 regions utilized.
