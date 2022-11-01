@@ -98,35 +98,35 @@ resource "null_resource" "ansible_provisioner" {
     inline = ["mkdir ansible"]
   }
   provisioner "file" {
-    source      = "${path.module}/files/avi_pulse_registration.py"
+    source      = "${path.module}/files/ansible/avi_pulse_registration.py"
     destination = "/home/admin/ansible/avi_pulse_registration.py"
   }
   provisioner "file" {
-    source      = "${path.module}/files/views_albservices.patch"
+    source      = "${path.module}/files/ansible/views_albservices.patch"
     destination = "/home/admin/ansible/views_albservices.patch"
   }
   provisioner "file" {
-    content = templatefile("${path.module}/files/avi-vsphere-all-in-one-play.yml.tpl",
+    content = templatefile("${path.module}/files/ansible/avi-vsphere-all-in-one-play.yml.tpl",
     local.cloud_settings)
     destination = "/home/admin/ansible/avi-vsphere-all-in-one-play.yml"
   }
   provisioner "file" {
-    content = templatefile("${path.module}/files/gslb-add-site-tasks.yml.tpl",
+    content = templatefile("${path.module}/files/ansible/gslb-add-site-tasks.yml.tpl",
     local.cloud_settings)
     destination = "/home/admin/ansible/gslb-add-site-tasks.yml"
   }
   provisioner "file" {
-    content = templatefile("${path.module}/files/avi-cloud-services-registration.yml.tpl",
+    content = templatefile("${path.module}/files/ansible/avi-cloud-services-registration.yml.tpl",
     local.cloud_settings)
     destination = "/home/admin/ansible/avi-cloud-services-registration.yml"
   }
   provisioner "file" {
-    content = templatefile("${path.module}/files/avi-upgrade.yml.tpl",
+    content = templatefile("${path.module}/files/ansible/avi-upgrade.yml.tpl",
     local.cloud_settings)
     destination = "/home/admin/ansible/avi-upgrade.yml"
   }
   provisioner "file" {
-    content = templatefile("${path.module}/files/avi-cleanup.yml.tpl",
+    content = templatefile("${path.module}/files/ansible/avi-cleanup.yml.tpl",
     local.cloud_settings)
     destination = "/home/admin/ansible/avi-cleanup.yml"
   }
