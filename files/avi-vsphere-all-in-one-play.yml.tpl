@@ -38,16 +38,6 @@
       disk: ${se_size[2]}
     se_ha_mode: ${se_ha_mode}
     controller_ha: ${controller_ha}
-    configure_ipam_profile: ${configure_ipam_profile}
-    ipam_networks:
-%{ if configure_ipam_profile ~}
-      ${ indent(6, yamlencode(ipam_networks))}
-%{ else ~}
-      - "network": "{{ ipam_network_1 | default('192.168.251.0/24') }}"
-        "static_pool":
-        - "{{ ipam_network_1_start | default('192.168.251.10') }}"
-        - "{{ ipam_network_1_end | default('192.168.251.254') }}"
-%{ endif ~}
 %{ if configure_se_mgmt_network ~}
     se_mgmt_network:
       ${ indent(6, yamlencode(se_mgmt_network))}
@@ -60,6 +50,8 @@
           addr: "${item.addr}"
           type: ${item.type}
 %{ endfor ~}
+    configure_ipam_profile:
+      ${ indent(6, yamlencode(configure_ipam_profile))}
     configure_dns_profile:
       ${ indent(6, yamlencode(configure_dns_profile))}
     configure_dns_vs:
@@ -344,7 +336,7 @@
                       type: "{{ item.type }}"
                   type: STATIC_IPS_FOR_VIP_AND_SE
             ip6_autocfg_enabled: false
-          loop: "{{ ipam_networks }}"
+          loop: "{{ configure_ipam_profile.networks }}"
           register: ipam_net
 
         - name: Create list with IPAM Network URLs
@@ -375,8 +367,7 @@
             name: "{{ cloud_name }}"
             ipam_provider_ref: "{{ create_ipam.obj.url }}"
             vtype: CLOUD_VCENTER
-
-      when: configure_ipam_profile == true
+      when: configure_ipam_profile.enabled == true
       tags: ipam_profile
 
     - name: Configure DNS Profile

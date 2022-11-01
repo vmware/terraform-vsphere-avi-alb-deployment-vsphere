@@ -57,9 +57,12 @@ variable "configure_controller" {
   default     = "true"
 }
 variable "configure_ipam_profile" {
-  description = "Configure Avi IPAM Profile for Virtual Service Address Allocation. If set to true the virtualservice_network variable must also be set"
-  type        = bool
-  default     = "false"
+  description = "Configure Avi IPAM Profile for Virtual Service Address Allocation. Example: { enabled = \"true\", networks = [{ portgroup = \"vs-portgroup\", network = \"192.168.1.0/24\" , type = \"V4\", static_pool = [\"192.168.1.10\",\"192.168.1.30\"]}] }"
+  type = object({
+    enabled  = bool,
+    networks = list(object({ portgroup = string, network = string, type = string, static_pool = list(string) }))
+  })
+  default = { enabled = "false", networks = [{ portgroup = "", network = "", type = "V4", static_pool = [""] }] }
 }
 variable "configure_dns_profile" {
   description = "Configure a DNS Profile for DNS Record Creation for Virtual Services. The usable_domains is a list of domains that Avi will be the Authoritative Nameserver for and NS records may need to be created pointing to the Avi Service Engine addresses. Supported profiles for the type parameter are AWS or AVI"
@@ -146,11 +149,6 @@ variable "se_mgmt_network" {
   description = "This variable configures the SE management network. Example: { network = \"192.168.10.0/24\" , gateway = \"192.168.10.1\", type = \"V4\", static_pool = [\"192.168.10.10\",\"192.168.10.30\"]}"
   type        = object({ network = string, gateway = string, type = string, static_pool = list(string) })
   default     = { network = "", gateway = "", type = "", static_pool = [""] }
-}
-variable "ipam_networks" {
-  description = "This variable configures the IPAM network(s). Example: { portgroup = \"vs-portgroup\", network = \"192.168.20.0/24\" , gateway = \"192.168.20.1\", type = \"V4\", static_pool = [\"192.168.20.10\",\"192.168.20.30\"]}"
-  type        = list(object({ portgroup = string, network = string, type = string, static_pool = list(string) }))
-  default     = [{ portgroup = "", network = "", type = "", static_pool = [""] }]
 }
 variable "vm_folder" {
   description = "The folder that the Avi Controller(s) will be placed in. This will be the full path and name of the folder that will be created"

@@ -71,12 +71,9 @@ module "avi-controller-vsphere" {
   controller_ip               = ["192.168.110.10"]
   controller_netmask          = "24"
   controller_gateway          = "192.168.110.1"
-  configure_ipam_profile      = "true"
-  ipam_networks                   = [{ portgroup = "PORTGROUP", network = "100.64.220.0/24", type = "V4", static_pool = ["100.64.220.20", "100.64.220.45"] }]
-  configure_dns_profile           = "true"
-  dns_service_domain              = "domain.net"
-  configure_dns_vs                = "true"
-  dns_vs_settings                 = { auto_allocate_ip = "true", vs_ip = "", portgroup = "PORTGROUP", network = "100.64.220.0/24", type = "V4" }
+  configure_ipam_profile      = { enabled = "true", networks = [{ portgroup = "PORTGROUP", network = "100.64.220.0/24", type = "V4", static_pool = ["100.64.220.20", "100.64.220.45"] }]
+  configure_dns_profile       = { enabled = "true", usable_domains = ["domain.net"] }
+  configure_dns_vs            = { enabled = "true", auto_allocate_ip = "true", vs_ip = "", portgroup = "PORTGROUP", network = "100.64.220.0/24", type = "V4" }
 }
 
 
@@ -120,17 +117,10 @@ module "avi_controller_west" {
   controller_ip                   = ["192.168.110.10"]
   controller_netmask              = "24"
   controller_gateway              = "192.168.110.1"
-  configure_ipam_profile          = "true"
-  ipam_networks                   = [{ portgroup = "PORTGROUP", network = "100.64.220.0/24", type = "V4", static_pool = ["100.64.220.20", "100.64.220.45"] }]
-  configure_dns_profile           = "true"
-  dns_service_domain              = "domain.net"
-  configure_dns_vs                = "true"
-  dns_vs_settings                 = { auto_allocate_ip = "true", vs_ip = "", portgroup = "PORTGROUP", network = "100.64.220.0/24", type = "V4" }
-  configure_gslb                  = "true"
-  gslb_site_name                  = "West1"
-  gslb_domains                    = ["gslb.avidemo.net"]
-  configure_gslb_additional_sites = "true"
-  additional_gslb_sites           = [{name = "East1", ip_address_list = module.avi_controller_east.controllers[*].private_ip_address , dns_vs_name = "DNS-VS"}]
+  configure_ipam_profile          = { enabled = "true", networks = [{ portgroup = "PORTGROUP", network = "100.64.220.0/24", type = "V4", static_pool = ["100.64.220.20", "100.64.220.45"] }] }
+  configure_dns_profile           = { enabled = "true", usable_domains = ["demowest.net"] }
+  configure_dns_vs                = { enabled = "true", auto_allocate_ip = "true", vs_ip = "", portgroup = "PORTGROUP", network = "100.64.220.0/24", type = "V4" }
+  configure_gslb                  = { enabled = "true", site_name = "West1", domains = ["gslb.avidemo.net"], additional_sites = [{name = "East1", ip_address_list = module.avi_controller_east.controllers[*].private_ip_address , dns_vs_name = "DNS-VS"}] }
 }
 
 module "avi_controller_east" {
@@ -163,14 +153,10 @@ module "avi_controller_east" {
   controller_ip               = ["192.168.120.10"]
   controller_netmask          = "24"
   controller_gateway          = "192.168.120.1"
-  configure_ipam_profile      = "true"
-  ipam_networks               = [{ portgroup = "PORTGROUP", network = "100.64.230.0/24", type = "V4", static_pool = ["100.64.230.20", "100.64.230.45"] }]
-  configure_dns_profile       = "true"
-  dns_service_domain          = "domain.net"
-  configure_dns_vs            = "true"
-  dns_vs_settings             = { auto_allocate_ip = "true", vs_ip = "", portgroup = "PORTGROUP", network = "100.64.230.0/24", type = "V4" }
-  create_gslb_se_group        = "true"
-  gslb_site_name              = "East"
+  configure_ipam_profile      = { enabled = "true", networks = [{ portgroup = "PORTGROUP", network = "100.64.230.0/24", type = "V4", static_pool = ["100.64.230.20", "100.64.230.45"] }] }
+  configure_dns_profile       = { enabled = "true", usable_domains = ["demoeast.net"] }
+  configure_dns_vs            = { enabled = "true", auto_allocate_ip = "true", portgroup = "PORTGROUP", network = "100.64.230.0/24" }
+  configure_gslb              =  { enabled = "true", site_name = "East" }
 }
 
 output "controllers_west" {
@@ -313,7 +299,7 @@ No modules.
 | <a name="input_configure_dns_profile"></a> [configure\_dns\_profile](#input\_configure\_dns\_profile) | Configure a DNS Profile for DNS Record Creation for Virtual Services. The usable\_domains is a list of domains that Avi will be the Authoritative Nameserver for and NS records may need to be created pointing to the Avi Service Engine addresses. Supported profiles for the type parameter are AWS or AVI | <pre>object({<br>    enabled        = bool,<br>    type           = optional(string, "AVI"),<br>    usable_domains = list(string),<br>    ttl            = optional(string, "30"),<br>    aws_profile    = optional(object({ iam_assume_role = string, region = string, vpc_id = string, access_key_id = string, secret_access_key = string }))<br>  })</pre> | <pre>{<br>  "enabled": false,<br>  "type": "AVI",<br>  "usable_domains": []<br>}</pre> | no |
 | <a name="input_configure_dns_vs"></a> [configure\_dns\_vs](#input\_configure\_dns\_vs) | Create Avi DNS Virtual Service. The subnet\_name parameter must be an existing AWS Subnet. If the allocate\_public\_ip parameter is set to true a EIP will be allocated for the VS. The VS IP address will automatically be allocated via the AWS IPAM | <pre>object({<br>    enabled          = bool,<br>    portgroup        = string,<br>    network          = string,<br>    auto_allocate_ip = optional(bool, true),<br>    vs_ip            = optional(string)<br>    type             = optional(string, "V4")<br>  })</pre> | <pre>{<br>  "enabled": "false",<br>  "network": "",<br>  "portgroup": ""<br>}</pre> | no |
 | <a name="input_configure_gslb"></a> [configure\_gslb](#input\_configure\_gslb) | Configures GSLB. In addition the configure\_dns\_vs variable must also be set for GSLB to be configured. See the GSLB Deployment README section for more information. | <pre>object({<br>    enabled          = bool,<br>    leader           = optional(bool, false),<br>    site_name        = string,<br>    domains          = optional(list(string)),<br>    create_se_group  = optional(bool, true),<br>    se_size          = optional(list(number), [2, 8, 30]),<br>    additional_sites = optional(list(object({ name = string, ip_address_list = list(string) })))<br>  })</pre> | <pre>{<br>  "domains": [<br>    ""<br>  ],<br>  "enabled": "false",<br>  "site_name": ""<br>}</pre> | no |
-| <a name="input_configure_ipam_profile"></a> [configure\_ipam\_profile](#input\_configure\_ipam\_profile) | Configure Avi IPAM Profile for Virtual Service Address Allocation. If set to true the virtualservice\_network variable must also be set | `bool` | `"false"` | no |
+| <a name="input_configure_ipam_profile"></a> [configure\_ipam\_profile](#input\_configure\_ipam\_profile) | Configure Avi IPAM Profile for Virtual Service Address Allocation. Example: { enabled = "true", networks = [{ portgroup = "vs-portgroup", network = "192.168.1.0/24" , type = "V4", static\_pool = ["192.168.1.10","192.168.1.30"]}] } | <pre>object({<br>    enabled  = bool,<br>    networks = list(object({ portgroup = string, network = string, type = string, static_pool = list(string) }))<br>  })</pre> | <pre>{<br>  "enabled": "false",<br>  "networks": [<br>    {<br>      "network": "",<br>      "portgroup": "",<br>      "static_pool": [<br>        ""<br>      ],<br>      "type": "V4"<br>    }<br>  ]<br>}</pre> | no |
 | <a name="input_configure_se_mgmt_network"></a> [configure\_se\_mgmt\_network](#input\_configure\_se\_mgmt\_network) | When true the se\_mgmt\_network\_address variable must be configured. If set to false, DHCP is enabled on the vSphere portgroup that the Avi Service Engines will use for management. | `bool` | `"true"` | no |
 | <a name="input_content_library"></a> [content\_library](#input\_content\_library) | The name of the Content Library that has the Avi Controller Image | `string` | n/a | yes |
 | <a name="input_controller_default_password"></a> [controller\_default\_password](#input\_controller\_default\_password) | This is the default password for the Avi controller image and can be found in the image download page. | `string` | n/a | yes |
@@ -328,7 +314,6 @@ No modules.
 | <a name="input_dns_search_domain"></a> [dns\_search\_domain](#input\_dns\_search\_domain) | The optional DNS search domain that will be used by the controller | `string` | `null` | no |
 | <a name="input_dns_servers"></a> [dns\_servers](#input\_dns\_servers) | The optional DNS servers that will be used for local DNS resolution by the controller. The server should be a valid IP address (v4 or v6) and valid options for type are V4 or V6. Example: [{ addr = "8.8.4.4", type = "V4"}, { addr = "8.8.8.8", type = "V4"}] | `list(object({ addr = string, type = string }))` | `null` | no |
 | <a name="input_email_config"></a> [email\_config](#input\_email\_config) | The Email settings that will be used for sending password reset information or for trigged alerts. The default setting will send emails directly from the Avi Controller | `object({ smtp_type = string, from_email = string, mail_server_name = string, mail_server_port = string, auth_username = string, auth_password = string })` | <pre>{<br>  "auth_password": "",<br>  "auth_username": "",<br>  "from_email": "admin@avicontroller.net",<br>  "mail_server_name": "localhost",<br>  "mail_server_port": "25",<br>  "smtp_type": "SMTP_LOCAL_HOST"<br>}</pre> | no |
-| <a name="input_ipam_networks"></a> [ipam\_networks](#input\_ipam\_networks) | This variable configures the IPAM network(s). Example: { portgroup = "vs-portgroup", network = "192.168.20.0/24" , gateway = "192.168.20.1", type = "V4", static\_pool = ["192.168.20.10","192.168.20.30"]} | `list(object({ portgroup = string, network = string, type = string, static_pool = list(string) }))` | <pre>[<br>  {<br>    "network": "",<br>    "portgroup": "",<br>    "static_pool": [<br>      ""<br>    ],<br>    "type": ""<br>  }<br>]</pre> | no |
 | <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | This prefix is appended to the names of the Controller and SEs | `string` | n/a | yes |
 | <a name="input_ntp_servers"></a> [ntp\_servers](#input\_ntp\_servers) | The NTP Servers that the Avi Controllers will use. The server should be a valid IP address (v4 or v6) or a DNS name. Valid options for type are V4, DNS, or V6 | `list(object({ addr = string, type = string }))` | <pre>[<br>  {<br>    "addr": "0.us.pool.ntp.org",<br>    "type": "DNS"<br>  },<br>  {<br>    "addr": "1.us.pool.ntp.org",<br>    "type": "DNS"<br>  },<br>  {<br>    "addr": "2.us.pool.ntp.org",<br>    "type": "DNS"<br>  },<br>  {<br>    "addr": "3.us.pool.ntp.org",<br>    "type": "DNS"<br>  }<br>]</pre> | no |
 | <a name="input_register_controller"></a> [register\_controller](#input\_register\_controller) | If enabled is set to true the controller will be registered and licensed with Avi Cloud Services. The Long Organization ID (organization\_id) can be found from https://console.cloud.vmware.com/csp/gateway/portal/#/organization/info. The jwt\_token can be retrieved at https://portal.avipulse.vmware.com/portal/controller/auth/cspctrllogin | `object({ enabled = bool, jwt_token = string, email = string, organization_id = string })` | <pre>{<br>  "email": "",<br>  "enabled": "false",<br>  "jwt_token": "",<br>  "organization_id": ""<br>}</pre> | no |
