@@ -81,7 +81,21 @@ output "controllers" {
   value = module.avi-controller-vsphere.controllers
 }
 ```
-## GSLB Deployment Example
+## GSLB Deployment
+For GSLB to be configured successfully the configure_gslb and configure_dns_vs variables must be configured. By default a new Service Engine Group (g-dns) and user (gslb-admin) will be created for the configuration. 
+
+The following is a description of the configure_gslb variable parameters and their usage:
+| Parameter   | Description | Type |
+| ----------- | ----------- | ----------- |
+| enabled      | Must be set to "true" for Active GSLB sites | bool
+| leader      | Must be set to "true" for only one GSLB site that will be the leader | bool
+| site_name   | Name of the GSLB site   | string
+| domains   | List of GSLB domains that will be configured | list(string)
+| create_se_group | Determines whether a g-dns SE group will be created        | bool
+| se_size   | The Azure VM Size used for the Avi Service Engines | string
+| additional_sites   | Additional sites that will be configured. This parameter should only be set for the primary GSLB site | string
+
+The example below shows a GSLB deployment with 2 regions utilized.
 ```hcl
 terraform {
   backend "local" {
