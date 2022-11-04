@@ -19,6 +19,10 @@
     controller_names:
       ${ indent(6, yamlencode(controller_names))}
     cloud_name: "Default-Cloud"
+    configure_nsx_cloud:
+      ${ indent(6, yamlencode(configure_nsx_cloud))}
+    configure_nsx_vcenter:
+      ${ indent(6, yamlencode(configure_nsx_vcenter))}
     vsphere_user: ${vsphere_user}
     vsphere_server: ${vsphere_server}
     vm_datacenter: ${vm_datacenter}
@@ -38,6 +42,16 @@
       disk: ${se_size[2]}
     se_ha_mode: ${se_ha_mode}
     controller_ha: ${controller_ha}
+    configure_ipam_profile: ${configure_ipam_profile}
+    ipam_networks:
+%{ if configure_ipam_profile ~}
+      ${ indent(6, yamlencode(ipam_networks))}
+%{ else ~}
+      - "network": "{{ ipam_network_1 | default('192.168.251.0/24') }}"
+        "static_pool":
+        - "{{ ipam_network_1_start | default('192.168.251.10') }}"
+        - "{{ ipam_network_1_end | default('192.168.251.254') }}"
+%{ endif ~}
 %{ if configure_se_mgmt_network ~}
     se_mgmt_network:
       ${ indent(6, yamlencode(se_mgmt_network))}
@@ -50,8 +64,6 @@
           addr: "${item.addr}"
           type: ${item.type}
 %{ endfor ~}
-    configure_ipam_profile:
-      ${ indent(6, yamlencode(configure_ipam_profile))}
     configure_dns_profile:
       ${ indent(6, yamlencode(configure_dns_profile))}
     configure_dns_vs:
@@ -121,124 +133,239 @@
         sleep: 5
         msg: "Can't connect to vCenter Server - {{ vsphere_server }}"
 
-    - name: Configure Cloud
-      avi_cloud:
-        avi_credentials: "{{ avi_credentials }}"
-        state: present
-        avi_api_update_method: patch
-        avi_api_patch_op: replace
-        name: "{{ cloud_name }}"
-        vtype: CLOUD_VCENTER
-        vcenter_configuration:
-          username: "{{ vsphere_user }}"
-          password: "{{ vsphere_password }}"
-          vcenter_url: "{{ vsphere_server }}"
-          privilege: WRITE_ACCESS
-          datacenter: "{{ vm_datacenter }}"
-%{ if split(".", avi_version)[0] == "22" ~}
-          use_content_lib: "{{ use_content_lib }}"
-%{ if use_content_lib ~}
+    - name: Configure NSX-T Cloud
+      block:
+      - name: Configure NSX-T Cloud User
+        avi_cloudconnectoruser:
+          avi_credentials: "{{ avi_credentials }}"
+          state: present
+          avi_api_update_method: patch
+          avi_api_patch_op: replace
+          name: nsx-cloud-user
+          nsxt_credentials:
+            password: "{{ nsx_password }}"
+            username: "{{ configure_nsx_cloud.username }}"
+        register: nsx_user
+      
+      - name: Configure vCenter Cloud User
+        avi_cloudconnectoruser:
+          avi_credentials: "{{ avi_credentials }}"
+          state: present
+          avi_api_update_method: patch
+          avi_api_patch_op: replace
+          name: "{{ item.name }}"
+          vcenter_credentials:
+            password: "{{ vsphere_password }}"
+            username: "{{ vsphere_user }}"
+        register: vcenter_user
+        loop: "{{ configure_nsx_vcenter }}"
+
+      - name: Build list for vCenter Users
+        set_fact:
+          vcenter_user_results: "{{ vcenter_user_results | default({}) | combine({ item.obj.name: item.obj.uuid , }) }}"
+        loop: "{{ vcenter_user.results }}"
+        loop_control:
+          loop_var: item
+
+      - name: Get Content Library ID
+        avi_api_session:
+          avi_credentials: "{{ avi_credentials }}"
+          http_method: post
+          path: "vcenter/contentlibraries"
+          data:
+            credentials_uuid: "{{ vcenter_user_results[item.name] }}"
+            host: "{{ item.url }}"
+        loop: "{{ configure_nsx_vcenter }}"
+        register: vcenter_content_libraries
+
+      - name: Build list for content libraries
+        set_fact:
+          content_library_results: "{{ content_library_results | default([]) + [{ 'url': vcenter.item.url, 'content_libs': vcenter.obj.resource.vcenter_clibs , }] }}"
+        loop: "{{ vcenter_content_libraries.results }}"
+        loop_control:
+          loop_var: vcenter
+      
+      - name: Build list for vCenter content libraries api field
+        set_fact:
+          contentlib_results: "{{ contentlib_results | default({}) | combine({ item.0.url : { item.1.name : item.1.id } }, recursive=true) }}"
+        loop: "{{ content_library_results|subelements('content_libs') }}"
+        loop_control:
+          loop_var: item
+        ignore_errors: yes
+        
+      - name: Build list for nsx data t1 segment config API field
+        set_fact:
+          nsx_data_t1_segment_config: "{{ nsx_data_t1_segment_config | default([]) + [{'segment_id': '/infra/segments/' + segment.segment_name, 'tier1_lr_id': '/infra/tier-1s/' + segment.t1_name }] }}"
+        loop: "{{ configure_nsx_cloud.data_segments }}"
+        loop_control:
+          loop_var: segment
+        ignore_errors: yes
+
+      - name: Configure NSX-T Cloud
+        avi_cloud:
+          avi_credentials: "{{ avi_credentials }}"
+          state: present
+          avi_api_update_method: patch
+          avi_api_patch_op: replace
+          name: "{{ configure_nsx_cloud.cloud_name }}"
+          vtype: CLOUD_NSXT
+          nsxt_configuration:
+            data_network_config:
+              tier1_segment_config:
+                manual:
+                  tier1_lrs: "{{ nsx_data_t1_segment_config }}"
+              transport_zone: "/infra/sites/default/enforcement-points/default/transport-zones/{{ configure_nsx_cloud.data_tz.id }}"
+              tz_type: "{{ configure_nsx_cloud.data_tz.type }}"
+            management_network_config:
+              overlay_segment:
+                segment_id: "/infra/segments/{{ configure_nsx_cloud.mgmt_segment.name }}"
+                tier1_lr_id: "/infra/tier-1s/{{ configure_nsx_cloud.mgmt_segment.t1_name }}"
+              transport_zone: "/infra/sites/default/enforcement-points/default/transport-zones/{{ configure_nsx_cloud.mgmt_tz.id }}"
+              tz_type: "{{ configure_nsx_cloud.mgmt_tz.type }}"
+            nsxt_credentials_ref: /api/cloudconnectoruser?name=nsx-cloud-user
+            nsxt_url: "{{ configure_nsx_cloud.nsx_mgr_url }}"
+          obj_name_prefix: "{{ name_prefix }}"
+        register: nsx_cloud
+
+      - name: Configure vCenter for NSX-T Cloud
+        avi_vcenterserver:
+          avi_credentials: "{{ avi_credentials }}"
+          state: present
+          avi_api_update_method: patch
+          avi_api_patch_op: replace
+          cloud_ref: "/api/cloud?name={{ configure_nsx_cloud.cloud_name }}"
           content_lib:
-            name: "{{ content_lib_name }}"
+            id: "{{ contentlib_results[item.url][item.content_library] }}"
+          name: vcenter-nsx
+          vcenter_credentials_ref: "/api/cloudconnectoruser?name={{ item.name }}"
+          vcenter_url: "{{ item.url }}"
+        loop: "{{ configure_nsx_vcenter }}"
+      - name: Set cloud_name variable to nsx cloud name
+        set_fact:
+          cloud_name: "{{ configure_nsx_cloud.cloud_name }}"
+      when: configure_nsx_cloud.enabled == true
+
+    - name: Configure vCenter Cloud
+      block:
+      - name: Configure Cloud
+        avi_cloud:
+          avi_credentials: "{{ avi_credentials }}"
+          state: present
+          avi_api_update_method: patch
+          avi_api_patch_op: replace
+          name: "{{ cloud_name }}"
+          vtype: CLOUD_VCENTER
+          vcenter_configuration:
+            username: "{{ vsphere_user }}"
+            password: "{{ vsphere_password }}"
+            vcenter_url: "{{ vsphere_server }}"
+            privilege: WRITE_ACCESS
+            datacenter: "{{ vm_datacenter }}"
+%{ if split(".", avi_version)[0] == "22" ~}
+            use_content_lib: "{{ use_content_lib }}"
+%{ if use_content_lib ~}
+            content_lib:
+              name: "{{ content_lib_name }}"
 %{ endif ~}%{ endif ~}
-        dhcp_enabled: true
-        license_type: "LIC_CORES"
-      register: avi_cloud
+          dhcp_enabled: true
+          license_type: "LIC_CORES"
+        register: avi_cloud
 
-    - name: Get Mangement Network UUID
-      avi_api_session:
-        avi_credentials: "{{ avi_credentials }}"
-        http_method: get
-        path: "vimgrnwruntime?name={{ se_mgmt_portgroup }}"
-      until: mgmt_network.obj.results.0.url is defined
-      retries: 5
-      delay: 10
-      register: mgmt_network
+      - name: Get Mangement Network UUID
+        avi_api_session:
+          avi_credentials: "{{ avi_credentials }}"
+          http_method: get
+          path: "vimgrnwruntime?name={{ se_mgmt_portgroup }}"
+        until: mgmt_network.obj.results.0.url is defined
+        retries: 5
+        delay: 10
+        register: mgmt_network
 
-    - name: Update Cloud Configuration with Mgmt Network 
-      avi_api_session:
-        avi_credentials: "{{ avi_credentials }}"
-        http_method: patch
-        path: "cloud/{{ avi_cloud.obj.uuid }}"
-        data:
-          add:
-            vcenter_configuration:
-              management_network: "{{ mgmt_network.obj.results.0.url }}"
+      - name: Update Cloud Configuration with Mgmt Network 
+        avi_api_session:
+          avi_credentials: "{{ avi_credentials }}"
+          http_method: patch
+          path: "cloud/{{ avi_cloud.obj.uuid }}"
+          data:
+            add:
+              vcenter_configuration:
+                management_network: "{{ mgmt_network.obj.results.0.url }}"
 %{ if configure_se_mgmt_network ~}
-              management_ip_subnet:
-                ip_addr:
-                  addr: "{{ se_mgmt_network.network | ipaddr('network') }}"
-                  type: "{{ se_mgmt_network.type }}"
-                mask: "{{ se_mgmt_network.network | ipaddr('prefix') }}"
+                management_ip_subnet:
+                  ip_addr:
+                    addr: "{{ se_mgmt_network.network | ipaddr('network') }}"
+                    type: "{{ se_mgmt_network.type }}"
+                  mask: "{{ se_mgmt_network.network | ipaddr('prefix') }}"
 
 %{ if split(".", avi_version)[0] != "22" ~}
-    - name: Wait for vCenter Discovery to complete
-      avi_api_session:
-        avi_credentials: "{{ avi_credentials }}"
-        http_method: get
-        path: "vimgrvcenterruntime"
-      until: vcenter_discovery.obj.results.0.inventory_state == "VCENTER_DISCOVERY_COMPLETE"
-      retries: 5
-      delay: 10
-      register: vcenter_discovery
+      - name: Wait for vCenter Discovery to complete
+        avi_api_session:
+          avi_credentials: "{{ avi_credentials }}"
+          http_method: get
+          path: "vimgrvcenterruntime"
+        until: vcenter_discovery.obj.results.0.inventory_state == "VCENTER_DISCOVERY_COMPLETE"
+        retries: 5
+        delay: 10
+        register: vcenter_discovery
       
-    - name: Wait for Cloud Status to be ready
-      avi_api_session:
-        avi_credentials: "{{ avi_credentials }}"
-        http_method: get
-        path: "cloud/{{ avi_cloud.obj.uuid }}/status"
-      until: cloudplacement.obj.state == "CLOUD_STATE_PLACEMENT_READY"
-      retries: 60
-      delay: 10
-      register: cloudplacement
+      - name: Wait for Cloud Status to be ready
+        avi_api_session:
+          avi_credentials: "{{ avi_credentials }}"
+          http_method: get
+          path: "cloud/{{ avi_cloud.obj.uuid }}/status"
+        until: cloudplacement.obj.state == "CLOUD_STATE_PLACEMENT_READY"
+        retries: 60
+        delay: 10
+        register: cloudplacement
 
 %{ endif ~}
-    - name: Update SE Mgmt Network Object with Static Pool
-      avi_network:
-        avi_credentials: "{{ avi_credentials }}"
-        state: present
-        avi_api_update_method: patch
-        avi_api_patch_op: add
-        name: ${se_mgmt_portgroup}
-        dhcp_enabled: false
-        configured_subnets:
-          - prefix:
-              ip_addr:
-                addr: "{{ se_mgmt_network.network | ipaddr('network') }}"
-                type: V4
-              mask: "{{ se_mgmt_network.network | ipaddr('prefix') }}"
-            static_ip_ranges:
-            - range:
-                begin:
-                  addr: "{{ se_mgmt_network.static_pool.0 }}"
-                  type: "{{ se_mgmt_network.type }}"
-                end:
-                  addr: "{{ se_mgmt_network.static_pool.1 }}"
-                  type: "{{ se_mgmt_network.type }}"
-              type: STATIC_IPS_FOR_VIP_AND_SE
-        ip6_autocfg_enabled: false
-      register: update_mgmt_network
+      - name: Update SE Mgmt Network Object with Static Pool
+        avi_network:
+          avi_credentials: "{{ avi_credentials }}"
+          state: present
+          avi_api_update_method: patch
+          avi_api_patch_op: add
+          name: ${se_mgmt_portgroup}
+          dhcp_enabled: false
+          configured_subnets:
+            - prefix:
+                ip_addr:
+                  addr: "{{ se_mgmt_network.network | ipaddr('network') }}"
+                  type: V4
+                mask: "{{ se_mgmt_network.network | ipaddr('prefix') }}"
+              static_ip_ranges:
+              - range:
+                  begin:
+                    addr: "{{ se_mgmt_network.static_pool.0 }}"
+                    type: "{{ se_mgmt_network.type }}"
+                  end:
+                    addr: "{{ se_mgmt_network.static_pool.1 }}"
+                    type: "{{ se_mgmt_network.type }}"
+                type: STATIC_IPS_FOR_VIP_AND_SE
+          ip6_autocfg_enabled: false
+        register: update_mgmt_network
 
-    - name: Create Default Route in Mgmt VRF
-      avi_vrfcontext:
-        avi_credentials: "{{ avi_credentials }}"
-        state: present
-        avi_api_update_method: patch
-        avi_api_patch_op: add
-        name: "management"
-        static_routes:
-          - prefix:
-              ip_addr:
-                addr: %{if se_mgmt_network.type == "V4" ~}0.0.0.0 %{ else ~}0 %{ endif }
+      - name: Create Default Route in Mgmt VRF
+        avi_vrfcontext:
+          avi_credentials: "{{ avi_credentials }}"
+          state: present
+          avi_api_update_method: patch
+          avi_api_patch_op: add
+          name: "management"
+          static_routes:
+            - prefix:
+                ip_addr:
+                  addr: %{if se_mgmt_network.type == "V4" ~}0.0.0.0 %{ else ~}0 %{ endif }
+                  type: "{{ se_mgmt_network.type }}"
+                mask: 0
+              next_hop:
+                addr: "{{ se_mgmt_network.gateway }}"
                 type: "{{ se_mgmt_network.type }}"
-              mask: 0
-            next_hop:
-              addr: "{{ se_mgmt_network.gateway }}"
-              type: "{{ se_mgmt_network.type }}"
-            route_id: 1
-      register: mgmt_network_default_route
+              route_id: 1
+        register: mgmt_network_default_route
 
 %{ endif ~} 
+      when: configure_nsx_cloud.enabled == false
 %{ if se_ha_mode == "active/active" ~}
     - name: Configure SE-Group
       avi_serviceenginegroup:
@@ -258,7 +385,7 @@
         memory_per_se: "{{ se_size.memory * 1024 }}"
         disk_per_se: "{{ se_size.disk }}"
         cpu_reserve: true
-        memory_reserve: true
+        mem_reserve: true
         realtime_se_metrics:
           duration: "10080"
           enabled: true
@@ -282,7 +409,7 @@
         memory_per_se: "{{ se_size.memory * 1024 }}"
         disk_per_se: "{{ se_size.disk }}"
         cpu_reserve: true
-        memory_reserve: true
+        mem_reserve: true
         realtime_se_metrics:
           duration: "10080"
           enabled: true
@@ -305,7 +432,7 @@
         memory_per_se: "{{ se_size.memory * 1024 }}"
         disk_per_se: "{{ se_size.disk }}"
         cpu_reserve: true
-        memory_reserve: true
+        mem_reserve: true
         realtime_se_metrics:
           duration: "10080"
           enabled: true
@@ -336,7 +463,7 @@
                       type: "{{ item.type }}"
                   type: STATIC_IPS_FOR_VIP_AND_SE
             ip6_autocfg_enabled: false
-          loop: "{{ configure_ipam_profile.networks }}"
+          loop: "{{ ipam_networks }}"
           register: ipam_net
 
         - name: Create list with IPAM Network URLs
@@ -367,7 +494,8 @@
             name: "{{ cloud_name }}"
             ipam_provider_ref: "{{ create_ipam.obj.url }}"
             vtype: CLOUD_VCENTER
-      when: configure_ipam_profile.enabled == true
+
+      when: configure_ipam_profile == true
       tags: ipam_profile
 
     - name: Configure DNS Profile
@@ -399,7 +527,7 @@
             avi_api_patch_op: add
             name: "{{ cloud_name }}"
             dns_provider_ref: "{{ create_dns_avi.obj.url }}"
-            vtype: CLOUD_GCP
+            vtype: CLOUD_VCENTER
           when: configure_dns_profile.type == "AVI"
 
         - name: Create AWS Route53 DNS Profile
@@ -426,7 +554,7 @@
             avi_api_patch_op: add
             name: "{{ cloud_name }}"
             dns_provider_ref: "{{ create_dns_aws.obj.url }}"
-            vtype: CLOUD_AZURE
+            vtype: CLOUD_VCENTER
           when: configure_dns_profile.type == "AWS"
       when: configure_dns_profile.enabled == true
       tags: dns_profile
@@ -453,7 +581,7 @@
             memory_per_se: "{{ configure_gslb.se_size.1 | int * 1024 }}"
             disk_per_se: "{{ configure_gslb.se_size.2 }}"
             cpu_reserve: true
-            memory_reserve: true
+            mem_reserve: true
             realtime_se_metrics:
               duration: "60"
               enabled: true
@@ -484,6 +612,10 @@
             avi_credentials: "{{ avi_credentials }}"
             tenant: "admin"
             cloud_ref: "/api/cloud?name={{ cloud_name }}"
+%{ if configure_nsx_cloud.enabled == true ~}
+            tier1_lr: "{{ nsx_data_t1_segment_config.0.tier1_lr_id }}"
+            vrf_context_ref: /api/vrfcontext?name={{ configure_nsx_cloud.data_segments.0.t1_name }}
+%{ endif ~}
             vip:
             - enabled: true
               vip_id: 0
@@ -513,6 +645,8 @@
               fqdn: "dns.{{ configure_dns_profile.usable_domains.0 }}"
             name: vsvip-DNS-VS-Default-Cloud
           register: vsvip_results
+          until: vsvip_results is not failed
+          retries: 10
 
         - name: Create DNS Virtual Service
           avi_virtualservice:
@@ -645,6 +779,11 @@
       register: cluster_config
       when: controller_ha == true
       tags: controller_ha
+    
+    - name: Check if Avi Collection is already installed
+      stat:
+        path: /home/admin/.ansible/collections/ansible_collections/vmware/alb
+      register: avicollection
 
     - name: Add Prerequisites for avi-cloud-services-registration.yml Play
       block:
@@ -666,6 +805,7 @@
           shell: patch --directory /opt/avi/python/bin/portal/api/ < /home/admin/ansible/views_albservices.patch
         
 %{ endif ~}
+      when: not avicollection.stat.exists
       tags: register_controller
 
     - name: Remove patch file

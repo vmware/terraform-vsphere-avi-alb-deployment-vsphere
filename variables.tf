@@ -56,13 +56,37 @@ variable "configure_controller" {
   type        = bool
   default     = "true"
 }
-variable "configure_ipam_profile" {
-  description = "Configure Avi IPAM Profile for Virtual Service Address Allocation. Example: { enabled = \"true\", networks = [{ portgroup = \"vs-portgroup\", network = \"192.168.1.0/24\" , type = \"V4\", static_pool = [\"192.168.1.10\",\"192.168.1.30\"]}] }"
+variable "configure_nsx_cloud" {
+  description = "Configure the Cloud type as NSX. The nsx_password and configure_nsx_vcenter variables should also be configured"
   type = object({
-    enabled  = bool,
-    networks = list(object({ portgroup = string, network = string, type = string, static_pool = list(string) }))
+    enabled       = bool,
+    username      = string,
+    nsx_mgr_url   = string,
+    cloud_name    = optional(string, "NSX")
+    mgmt_segment  = object({ name = string, t1_name = string }),
+    mgmt_tz       = object({ id = string, type = string }),
+    data_tz       = object({ id = string, type = string }),
+    data_segments = list(object({ segment_name = string, t1_name = string }))
   })
-  default = { enabled = "false", networks = [{ portgroup = "", network = "", type = "V4", static_pool = [""] }] }
+  default = { enabled = false, username = "", nsx_mgr_url = "", mgmt_segment = { name = "", t1_name = "" }, mgmt_tz = { id = "", type = "OVERLAY" }, data_tz = { id = "", type = "OVERLAY" }, data_segments = [{ segment_name = "", t1_name = "" }] }
+  validation {
+    condition     = contains(["OVERLAY", "VLAN"], var.configure_nsx_cloud.mgmt_tz.type)
+    error_message = "Supported Transport Zone types are 'OVERLAY' or 'VLAN'"
+  }
+}
+variable "configure_nsx_vcenter" {
+  description = "Configure the vCenters used for the NSX Cloud configuration. The vsphere_avi_user and vsphere_avi_password variables must also be set and will be used for authenticating to all vCenters configured with this variable"
+  type = list(object({
+    name            = string,
+    url             = string,
+    content_library = string
+  }))
+  default = [{ name = "", url = "", content_library = "" }]
+}
+variable "configure_ipam_profile" {
+  description = "Configure Avi IPAM Profile for Virtual Service Address Allocation. If set to true the virtualservice_network variable must also be set"
+  type        = bool
+  default     = "false"
 }
 variable "configure_dns_profile" {
   description = "Configure a DNS Profile for DNS Record Creation for Virtual Services. The usable_domains is a list of domains that Avi will be the Authoritative Nameserver for and NS records may need to be created pointing to the Avi Service Engine addresses. Supported profiles for the type parameter are AWS or AVI"
@@ -150,6 +174,11 @@ variable "se_mgmt_network" {
   type        = object({ network = string, gateway = string, type = string, static_pool = list(string) })
   default     = { network = "", gateway = "", type = "", static_pool = [""] }
 }
+variable "ipam_networks" {
+  description = "This variable configures the IPAM network(s). Example: { portgroup = \"vs-portgroup\", network = \"192.168.20.0/24\" , gateway = \"192.168.20.1\", type = \"V4\", static_pool = [\"192.168.20.10\",\"192.168.20.30\"]}"
+  type        = list(object({ portgroup = string, network = string, type = string, static_pool = list(string) }))
+  default     = [{ portgroup = "", network = "", type = "", static_pool = [""] }]
+}
 variable "vm_folder" {
   description = "The folder that the Avi Controller(s) will be placed in. This will be the full path and name of the folder that will be created"
   type        = string
@@ -177,6 +206,12 @@ variable "vsphere_password" {
   description = "The password for the user account that will be used for creating vSphere resources"
   type        = string
   sensitive   = false
+}
+variable "nsx_password" {
+  description = "The NSX Manager password for the user account that will be used for the NSX Cloud configured with the configure_nsx_cloud variable"
+  type        = string
+  sensitive   = false
+  default     = ""
 }
 variable "vsphere_server" {
   description = "The IP Address or FQDN of the VMware vCenter server"

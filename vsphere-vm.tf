@@ -22,11 +22,14 @@ locals {
     controller_ip             = var.controller_ip
     controller_names          = local.controller_names
     configure_ipam_profile    = var.configure_ipam_profile
+    ipam_networks             = var.configure_ipam_profile ? var.ipam_networks : null
     configure_dns_profile     = var.configure_dns_profile
     configure_dns_vs          = var.configure_dns_vs
     configure_gslb            = var.configure_gslb
     se_ha_mode                = var.se_ha_mode
     avi_upgrade               = var.avi_upgrade
+    configure_nsx_cloud       = var.configure_nsx_cloud
+    configure_nsx_vcenter     = var.configure_nsx_vcenter
   }
   controller_sizes = {
     small  = [8, 24576]
@@ -133,15 +136,15 @@ resource "null_resource" "ansible_provisioner" {
   provisioner "remote-exec" {
     inline = var.configure_controller ? var.vsphere_avi_user == null ? [
       "cd ansible",
-      "ansible-playbook avi-vsphere-all-in-one-play.yml -e password=${var.controller_password} -e vsphere_password=${var.vsphere_password} 2> ansible-error.log | tee ansible-playbook.log",
+      "ansible-playbook avi-vsphere-all-in-one-play.yml -e password=${var.controller_password} -e nsx_password=${var.nsx_password} -e vsphere_password=${var.vsphere_password} 2> ansible-error.log | tee ansible-playbook.log",
       "echo Controller Configuration Completed"
       ] : [
       "cd ansible",
-      "ansible-playbook avi-vsphere-all-in-one-play.yml -e password=${var.controller_password} -e vsphere_password=${var.vsphere_avi_password} 2> ansible-error.log | tee ansible-playbook.log",
+      "ansible-playbook avi-vsphere-all-in-one-play.yml -e password=${var.controller_password} -e nsx_password=${var.nsx_password} -e vsphere_password=${var.vsphere_avi_password} 2> ansible-error.log | tee ansible-playbook.log",
       "echo Controller Configuration Completed"
       ] : [
       "cd ansible",
-      "ansible-playbook avi-vsphere-all-in-one-play.yml -e password=${var.controller_password} --tags register_controller 2> ansible-error.log | tee ansible-playbook.log",
+      "ansible-playbook avi-vsphere-all-in-one-play.yml -e password=${var.controller_password} -e nsx_password=${var.nsx_password} --tags register_controller 2> ansible-error.log | tee ansible-playbook.log",
       "echo Controller Configuration Completed"
     ]
   }
