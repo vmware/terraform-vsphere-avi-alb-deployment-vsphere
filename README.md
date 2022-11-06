@@ -10,7 +10,7 @@ The module is meant to be modular and can create all or none of the prerequiste 
 During the creation of the Controller instance the following initialization steps are performed:
 * Change default password to user specified password
 * Copy Ansible playbook to controller using the assigned IP Address
-* Run Ansible playbook to configure initial settings and vSphere Full Access Cloud 
+* Run Ansible playbook to configure initial settings and vCenter or NSX Full Access Cloud
 
 Optionally the following Avi configurations can be created:
 * Avi IPAM Profile (configure_ipam_profile variable)
@@ -36,6 +36,7 @@ The following packages must be installed on the host operating system:
 * curl 
 
 # Usage
+## vCenter Full Access Cloud Deployment
 ```hcl
 terraform {
   backend "local" {
@@ -46,13 +47,13 @@ module "avi-controller-vsphere" {
   version = "1.0.x"
   
   controller_default_password = "PASSWORD"
-  avi_version                 = "20.1.5"
+  avi_version                 = "22.1.2"
   controller_password         = "NEWPASSWORD"
   controller_ha               = "true"
   create_roles                = "true"
   vsphere_datacenter          = "DATACENTER"
   content_library             = "CONTENT_LIBRARY_NAME"
-  vm_template                 = "controller-20.1.5-9148"
+  vm_template                 = "controller-22.1.2"
   vm_datastore                = "DATASTORE"
   name_prefix                 = "PREFIX"
   dns_servers                 = [{ addr = "8.8.4.4", type = "V4" }, { addr = "8.8.8.8", type = "V4" }]
@@ -68,6 +69,56 @@ module "avi-controller-vsphere" {
   vsphere_avi_password        = "PASSWORD"
   vsphere_password            = "PASSWORD"
   vsphere_server              = "VCENTER_ADDRESS"
+  controller_ip               = ["192.168.110.10"]
+  controller_netmask          = "24"
+  controller_gateway          = "192.168.110.1"
+  configure_ipam_profile      = { enabled = "true", networks = [{ portgroup = "PORTGROUP", network = "100.64.220.0/24", type = "V4", static_pool = ["100.64.220.20", "100.64.220.45"] }]
+  configure_dns_profile       = { enabled = "true", usable_domains = ["domain.net"] }
+  configure_dns_vs            = { enabled = "true", auto_allocate_ip = "true", vs_ip = "", portgroup = "PORTGROUP", network = "100.64.220.0/24", type = "V4" }
+}
+
+
+output "controllers" {
+  value = module.avi-controller-vsphere.controllers
+}
+```
+
+## NSX Full Access Cloud Deployment
+```hcl
+terraform {
+  backend "local" {
+  }
+}
+module "avi-controller-vsphere" {
+  source  = "slarimore02/avi-controller-vsphere/vsphere"
+  version = "1.0.x"
+  
+  controller_default_password = "PASSWORD"
+  avi_version                 = "22.1.2"
+  controller_password         = "NEWPASSWORD"
+  controller_ha               = "true"
+  create_roles                = "true"
+  vsphere_datacenter          = "DATACENTER"
+  content_library             = "CONTENT_LIBRARY_NAME"
+  vm_template                 = "controller-22.1.2"
+  vm_datastore                = "DATASTORE"
+  name_prefix                 = "PREFIX"
+  dns_servers                 = [{ addr = "8.8.4.4", type = "V4" }, { addr = "8.8.8.8", type = "V4" }]
+  dns_search_domain           = "vmware.com"
+  ntp_servers                 = [{ "addr": "0.us.pool.ntp.org","type": "DNS" },{ "addr": "1.us.pool.ntp.org","type": "DNS" },{ "addr": "2.us.pool.ntp.org", "type": "DNS" },{ "addr": "3.us.pool.ntp.org", "type": "DNS" }]
+  se_mgmt_portgroup           = "SE_PORTGROUP"
+  se_mgmt_network             = { network = "192.168.110.0/24", gateway = "192.168.110.1", type = "V4", static_pool = ["192.168.110.100", "192.168.110.200"] }
+  controller_mgmt_portgroup   = "MGMT_PORTGROUP"
+  compute_cluster             = "CLUSTER"
+  vm_folder                   = "FOLDER"
+  vsphere_user                = "USERNAME"
+  vsphere_avi_user            = "USERNAME"
+  vsphere_avi_password        = "PASSWORD"
+  vsphere_password            = "PASSWORD"
+  vsphere_server              = "VCENTER_ADDRESS"
+  nsx_password                = "PASSWORD"
+  configure_nsx_cloud         = { enabled = true, username = "admin", nsx_mgr_url = "IP or DOMAIN_NAME", mgmt_segment = { name = "avi-mgmt", t1_name = "t1-gateway-mgmt"}, mgmt_tz = { id = "1b3a2f36-bfd1-443e-a0f6-4de01abc963e", type = "OVERLAY"}, data_tz = { id = "1b3a2f36-bfd1-443e-a0f6-4de01abc963e", type = "OVERLAY"}, data_segments = [{ segment_name = "Avi-VIP-Segment", t1_name = "t1-avi-virtual-services" }] }
+  configure_nsx_vcenter       = [{ name = "nsx-vsphere1", url = "IP or DOMAIN_NAME", content_library = "avi"}]
   controller_ip               = ["192.168.110.10"]
   controller_netmask          = "24"
   controller_gateway          = "192.168.110.1"
@@ -106,13 +157,13 @@ module "avi_controller_west" {
   version = "1.0.x"
   
   controller_default_password     = "PASSWORD"
-  avi_version                     = "20.1.5"
+  avi_version                     = "22.1.2"
   controller_password             = "NEWPASSWORD"
   controller_ha                   = "true"
   create_roles                    = "true"
   vsphere_datacenter              = "DATACENTER"
   content_library                 = "CONTENT_LIBRARY_NAME"
-  vm_template                     = "controller-20.1.5-9148"
+  vm_template                     = "controller-22.1.2"
   vm_datastore                    = "DATASTORE"
   name_prefix                     = "PREFIX"
   dns_servers                     = [{ addr = "8.8.4.4", type = "V4" }, { addr = "8.8.8.8", type = "V4" }]
@@ -142,13 +193,13 @@ module "avi_controller_east" {
   version = "1.0.x"
   
   controller_default_password = "PASSWORD"
-  avi_version                 = "20.1.5"
+  avi_version                 = "22.1.2"
   controller_password         = "NEWPASSWORD"
   controller_ha               = "true"
   create_roles                = "true"
   vsphere_datacenter          = "DATACENTER"
   content_library             = "CONTENT_LIBRARY_NAME"
-  vm_template                 = "controller-20.1.5-9148"
+  vm_template                 = "controller-22.1.2"
   vm_datastore                = "DATASTORE"
   name_prefix                 = "PREFIX"
   dns_servers                 = [{ addr = "8.8.4.4", type = "V4" }, { addr = "8.8.8.8", type = "V4" }]
