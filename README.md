@@ -3,7 +3,7 @@ This Terraform module creates and configures an AVI (NSX Advanced Load-Balancer)
 
 ## Module Functions
 The module is meant to be modular and can create all or none of the prerequiste resources needed for the AVI vSphere Deployment including:
-* vSphere Role for Avi (optional with create_role variable)
+* vSphere Roles for Avi (optional with create_role variable)
 * vSphere virtual machines for Avi Controller(s)
 * Cluster Anti-Affinity rules for HA Avi Controller Deployment
 
@@ -342,6 +342,8 @@ No modules.
 | [vsphere_folder.avi](https://registry.terraform.io/providers/hashicorp/vsphere/latest/docs/resources/folder) | resource |
 | [vsphere_role.avi_folder](https://registry.terraform.io/providers/hashicorp/vsphere/latest/docs/resources/role) | resource |
 | [vsphere_role.avi_root](https://registry.terraform.io/providers/hashicorp/vsphere/latest/docs/resources/role) | resource |
+| [vsphere_role.nsx_avi_folder](https://registry.terraform.io/providers/hashicorp/vsphere/latest/docs/resources/role) | resource |
+| [vsphere_role.nsx_avi_global](https://registry.terraform.io/providers/hashicorp/vsphere/latest/docs/resources/role) | resource |
 | [vsphere_virtual_machine.avi_controller](https://registry.terraform.io/providers/hashicorp/vsphere/latest/docs/resources/virtual_machine) | resource |
 | [vsphere_compute_cluster.avi](https://registry.terraform.io/providers/hashicorp/vsphere/latest/docs/data-sources/compute_cluster) | data source |
 | [vsphere_content_library.library](https://registry.terraform.io/providers/hashicorp/vsphere/latest/docs/data-sources/content_library) | data source |

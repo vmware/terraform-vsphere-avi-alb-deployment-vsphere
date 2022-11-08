@@ -7,14 +7,14 @@ resource "vsphere_entity_permissions" "avi_folder" {
     user_or_group = var.vsphere_avi_user == null ? var.vsphere_user : var.vsphere_avi_user
     propagate     = true
     is_group      = false
-    role_id       = vsphere_role.avi_folder[0].id
+    role_id       = var.configure_nsx_cloud.enabled ? vsphere_role.nsx_avi_folder[0].id : vsphere_role.avi_folder[0].id
   }
   lifecycle {
     ignore_changes = [permissions]
   }
 }
 resource "vsphere_entity_permissions" "avi_root" {
-  count       = var.create_roles ? 1 : 0
+  count       = var.create_roles && var.configure_nsx_cloud.enabled == false ? 1 : 0
   entity_id   = data.vsphere_folder.root.id
   entity_type = "Folder"
 
@@ -29,9 +29,13 @@ resource "vsphere_entity_permissions" "avi_root" {
   }
 }
 resource "vsphere_role" "avi_root" {
-  count = var.create_roles ? 1 : 0
+  count = var.create_roles && var.configure_nsx_cloud.enabled == false ? 1 : 0
   name  = "avi_root"
   role_privileges = [
+    "ContentLibrary.AddLibraryItem",
+    "ContentLibrary.DeleteLibraryItem",
+    "ContentLibrary.UpdateLibraryItem",
+    "ContentLibrary.UpdateSession",
     "Datastore.AllocateSpace",
     "Network.Assign",
     "Host.Config.Network",
@@ -42,7 +46,7 @@ resource "vsphere_role" "avi_root" {
   ]
 }
 resource "vsphere_role" "avi_folder" {
-  count = var.create_roles ? 1 : 0
+  count = var.create_roles && var.configure_nsx_cloud.enabled == false ? 1 : 0
   name  = "avi_folder"
   role_privileges = [
     "Datacenter.IpPoolConfig",
@@ -212,5 +216,70 @@ resource "vsphere_role" "avi_folder" {
     "VApp.PowerOff",
     "VApp.Suspend",
     "VApp.Rename"
+  ]
+}
+resource "vsphere_role" "nsx_avi_global" {
+  count = var.create_roles && var.configure_nsx_cloud.enabled ? 1 : 0
+  name  = "AviRole- Global"
+  role_privileges = [
+    "ContentLibrary.AddLibraryItem",
+    "ContentLibrary.DeleteLibraryItem",
+    "ContentLibrary.UpdateLibraryItem",
+    "ContentLibrary.UpdateSession",
+    "Datastore.AllocateSpace",
+    "Datastore.DeleteFile",
+    "Network.Assign",
+    "Network.Delete",
+    "VApp.Import",
+    "VirtualMachine.Config.AddNewDisk"
+  ]
+}
+resource "vsphere_role" "nsx_avi_folder" {
+  count = var.create_roles && var.configure_nsx_cloud.enabled ? 1 : 0
+  name  = "AviRole-Folder"
+  role_privileges = [
+    "Folder.Create",
+    "Network.Delete",
+    "Network.Assign",
+    "Resource.AssignVMToPool",
+    "Task.Create",
+    "Task.Update",
+    "VApp.AssignVM",
+    "VApp.AssignResourcePool",
+    "VApp.AssignVApp",
+    "VApp.Create",
+    "VApp.Delete",
+    "VApp.Export",
+    "VApp.Import",
+    "VApp.PowerOff",
+    "VApp.PowerOn",
+    "VApp.ApplicationConfig",
+    "VApp.InstanceConfig",
+    "VirtualMachine.Config.AddExistingDisk",
+    "VirtualMachine.Config.AddNewDisk",
+    "VirtualMachine.Config.AddRemoveDevice",
+    "VirtualMachine.Config.AdvancedConfig",
+    "VirtualMachine.Config.CPUCount",
+    "VirtualMachine.Config.Memory",
+    "VirtualMachine.Config.Settings",
+    "VirtualMachine.Config.Resource",
+    "VirtualMachine.Config.MksControl",
+    "VirtualMachine.Config.DiskExtend",
+    "VirtualMachine.Config.EditDevice",
+    "VirtualMachine.Config.RemoveDisk",
+    "VirtualMachine.Inventory.Create",
+    "VirtualMachine.Inventory.Delete",
+    "VirtualMachine.Inventory.Register",
+    "VirtualMachine.Inventory.Unregister",
+    "VirtualMachine.Interact.DeviceConnection",
+    "VirtualMachine.Interact.ToolsInstall",
+    "VirtualMachine.Interact.PowerOff",
+    "VirtualMachine.Interact.PowerOn",
+    "VirtualMachine.Interact.Reset",
+    "VirtualMachine.Provisioning.DiskRandomAccess",
+    "VirtualMachine.Provisioning.FileRandomAccess",
+    "VirtualMachine.Provisioning.DiskRandomRead",
+    "VirtualMachine.Provisioning.DeployTemplate",
+    "VirtualMachine.Provisioning.MarkAsVM"
   ]
 }
