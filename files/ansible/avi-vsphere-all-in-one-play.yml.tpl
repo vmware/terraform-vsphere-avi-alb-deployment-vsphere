@@ -261,7 +261,7 @@
             vcenter_url: "{{ vsphere_server }}"
             privilege: WRITE_ACCESS
             datacenter: "{{ vm_datacenter }}"
-%{ if split(".", avi_version)[0] == "22" ~}
+%{ if (split(".", avi_version)[0] == "22") || (split(".", avi_version)[0] == "21" && split(".", avi_version)[2] >= 6) ~}
             use_content_lib: "{{ use_content_lib }}"
 %{ if use_content_lib ~}
             content_lib:
@@ -296,29 +296,17 @@
                     addr: "{{ se_mgmt_network.network | ipaddr('network') }}"
                     type: "{{ se_mgmt_network.type }}"
                   mask: "{{ se_mgmt_network.network | ipaddr('prefix') }}"
-
-%{ if split(".", avi_version)[0] != "22" ~}
-      - name: Wait for vCenter Discovery to complete
-        avi_api_session:
-          avi_credentials: "{{ avi_credentials }}"
-          http_method: get
-          path: "vimgrvcenterruntime"
-        until: vcenter_discovery.obj.results.0.inventory_state == "VCENTER_DISCOVERY_COMPLETE"
-        retries: 5
-        delay: 10
-        register: vcenter_discovery
       
       - name: Wait for Cloud Status to be ready
         avi_api_session:
           avi_credentials: "{{ avi_credentials }}"
           http_method: get
-          path: "cloud/{{ avi_cloud.obj.uuid }}/status"
-        until: cloudplacement.obj.state == "CLOUD_STATE_PLACEMENT_READY"
+          path: "cloud-inventory?name={{ cloud_name }}"
+        until: cloudstatus.obj.results.0.status.state == "CLOUD_STATE_PLACEMENT_READY"
         retries: 60
         delay: 10
-        register: cloudplacement
+        register: cloudstatus
 
-%{ endif ~}
       - name: Update SE Mgmt Network Object with Static Pool
         avi_network:
           avi_credentials: "{{ avi_credentials }}"
