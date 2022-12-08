@@ -42,6 +42,12 @@ terraform {
   backend "local" {
   }
 }
+provider "vsphere" {
+  user                 = "administrator@vsphere.local"
+  password             = "PASSWORD"
+  vsphere_server       = "URLorIP"
+  allow_unverified_ssl = true
+}
 module "avi-controller-vsphere" {
   source  = "slarimore02/avi-controller-vsphere/vsphere"
   version = "1.0.x"
@@ -88,6 +94,12 @@ output "controllers" {
 terraform {
   backend "local" {
   }
+}
+provider "vsphere" {
+  user                 = "administrator@vsphere.local"
+  password             = "PASSWORD"
+  vsphere_server       = "URLorIP"
+  allow_unverified_ssl = true
 }
 module "avi-controller-vsphere" {
   source  = "slarimore02/avi-controller-vsphere/vsphere"
@@ -151,6 +163,12 @@ The example below shows a GSLB deployment with 2 regions utilized.
 terraform {
   backend "local" {
   }
+}
+provider "vsphere" {
+  user                 = "administrator@vsphere.local"
+  password             = "PASSWORD"
+  vsphere_server       = "URLorIP"
+  allow_unverified_ssl = true
 }
 module "avi_controller_west" {
   source  = "slarimore02/avi-controller-vsphere/vsphere"
