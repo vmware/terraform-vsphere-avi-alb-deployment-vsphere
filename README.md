@@ -10,7 +10,7 @@ The module is meant to be modular and can create all or none of the prerequiste 
 During the creation of the Controller instance the following initialization steps are performed:
 * Change default password to user specified password
 * Copy Ansible playbook to controller using the assigned IP Address
-* Run Ansible playbook to configure initial settings and vCenter or NSX Full Access Cloud
+* Run Ansible playbook to configure initial settings for a vCenter or NSX Full Access Cloud
 
 Optionally the following Avi configurations can be created:
 * Avi IPAM Profile (configure_ipam_profile variable)
