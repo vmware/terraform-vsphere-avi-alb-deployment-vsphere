@@ -42,7 +42,8 @@
       disk: ${se_size[2]}
     se_ha_mode: ${se_ha_mode}
     controller_ha: ${controller_ha}
-    configure_ipam_profile: ${configure_ipam_profile}
+    configure_ipam_profile:
+      ${ indent(6, yamlencode(configure_ipam_profile))}
 %{ if configure_se_mgmt_network ~}
     se_mgmt_network:
       ${ indent(6, yamlencode(se_mgmt_network))}
