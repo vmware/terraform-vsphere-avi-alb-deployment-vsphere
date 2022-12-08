@@ -22,7 +22,6 @@ locals {
     controller_ip             = var.controller_ip
     controller_names          = local.controller_names
     configure_ipam_profile    = var.configure_ipam_profile
-    ipam_networks             = var.configure_ipam_profile ? var.ipam_networks : null
     configure_dns_profile     = var.configure_dns_profile
     configure_dns_vs          = var.configure_dns_vs
     configure_gslb            = var.configure_gslb
