@@ -169,10 +169,21 @@ provider "vsphere" {
   password             = "PASSWORD"
   vsphere_server       = "URLorIP"
   allow_unverified_ssl = true
+  alias                = "west"
+}
+provider "vsphere" {
+  user                 = "administrator@vsphere.local"
+  password             = "PASSWORD"
+  vsphere_server       = "URLorIP"
+  allow_unverified_ssl = true
+  alias                = "east"
 }
 module "avi_controller_west" {
   source  = "slarimore02/avi-controller-vsphere/vsphere"
   version = "1.0.x"
+  providers = {
+    vsphere = vsphere.west
+  }
   
   controller_default_password     = "PASSWORD"
   avi_version                     = "22.1.2"
@@ -209,6 +220,9 @@ module "avi_controller_west" {
 module "avi_controller_east" {
   source  = "slarimore02/avi-controller-vsphere/vsphere"
   version = "1.0.x"
+  providers = {
+    vsphere = vsphere.east
+  }
   
   controller_default_password = "PASSWORD"
   avi_version                 = "22.1.2"
