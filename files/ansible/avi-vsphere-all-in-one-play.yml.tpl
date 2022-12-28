@@ -274,20 +274,19 @@
         register: mgmt_network
 
       - name: Update Cloud Configuration with Mgmt Network 
-        avi_api_session:
+        avi_cloud:
           avi_credentials: "{{ avi_credentials }}"
-          http_method: patch
-          path: "cloud/{{ avi_cloud.obj.uuid }}"
-          data:
-            add:
-              vcenter_configuration:
-                management_network: "{{ mgmt_network.obj.results.0.url }}"
+          avi_api_update_method: patch
+          avi_api_patch_op: add
+          name: "{{ cloud_name }}"
+          vcenter_configuration:
+            management_network: "{{ mgmt_network.obj.results.0.url }}"
 %{ if configure_se_mgmt_network ~}
-                management_ip_subnet:
-                  ip_addr:
-                    addr: "{{ se_mgmt_network.network | ipaddr('network') }}"
-                    type: "{{ se_mgmt_network.type }}"
-                  mask: "{{ se_mgmt_network.network | ipaddr('prefix') }}"
+            management_ip_subnet:
+              ip_addr:
+                addr: "{{ se_mgmt_network.network | ipaddr('network') }}"
+                type: "{{ se_mgmt_network.type }}"
+              mask: "{{ se_mgmt_network.network | ipaddr('prefix') }}"              
       
       - name: Wait for Cloud Status to be ready
         avi_api_session:
@@ -476,6 +475,7 @@
             avi_api_patch_op: add
             name: "{{ cloud_name }}"
             ipam_provider_ref: "{{ create_ipam.obj.url }}"
+            vtype: %{if configure_nsx_cloud.enabled == true ~}"CLOUD_NSXT" %{ else ~}"CLOUD_VCENTER" %{ endif }
 
       when: configure_ipam_profile.enabled == true
       tags: ipam_profile
