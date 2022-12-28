@@ -305,7 +305,8 @@
           state: present
           avi_api_update_method: patch
           avi_api_patch_op: add
-          name: ${se_mgmt_portgroup}
+          name: "{{ se_mgmt_portgroup }}"
+          cloud_ref: "/api/cloud?name={{ cloud_name }}"
           dhcp_enabled: false
           configured_subnets:
             - prefix:
@@ -331,7 +332,8 @@
           state: present
           avi_api_update_method: patch
           avi_api_patch_op: add
-          name: "management"
+          name: %{if configure_nsx_cloud.enabled == true ~}{{ configure_nsx_cloud.mgmt_segment.name }}" %{ else ~}"management" %{ endif }
+          cloud_ref: "/api/cloud?name={{ cloud_name }}"
           static_routes:
             - prefix:
                 ip_addr:
@@ -426,6 +428,7 @@
             avi_api_update_method: patch
             avi_api_patch_op: add
             name: "{{ item.portgroup }}"
+            cloud_ref: "/api/cloud?name={{ cloud_name }}"
             dhcp_enabled: false
             configured_subnets:
               - prefix:
@@ -473,7 +476,6 @@
             avi_api_patch_op: add
             name: "{{ cloud_name }}"
             ipam_provider_ref: "{{ create_ipam.obj.url }}"
-            vtype: CLOUD_VCENTER
 
       when: configure_ipam_profile.enabled == true
       tags: ipam_profile
