@@ -332,7 +332,7 @@
           state: present
           avi_api_update_method: patch
           avi_api_patch_op: add
-          name: %{if configure_nsx_cloud.enabled == true ~}{{ configure_nsx_cloud.mgmt_segment.name }}" %{ else ~}"management" %{ endif }
+          name: %{if configure_nsx_cloud.enabled == true ~}"{{ configure_nsx_cloud.mgmt_segment.name }}" %{ else ~}"management" %{ endif }
           cloud_ref: "/api/cloud?name={{ cloud_name }}"
           static_routes:
             - prefix:
