@@ -17,7 +17,7 @@ variable "controller_ha" {
   default     = "false"
 }
 variable "cluster_ip" {
-  description = "Optional sets the IP address of the Avi Controller cluster. This address must be in the same subnet as the Avi Controller VMs."
+  description = "Sets the IP address of the Avi Controller cluster. This address must be in the same subnet as the Avi Controller VMs."
   type        = string
   default     = null
 }
