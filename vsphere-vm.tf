@@ -29,6 +29,7 @@ locals {
     avi_upgrade               = var.avi_upgrade
     configure_nsx_cloud       = var.configure_nsx_cloud
     configure_nsx_vcenter     = var.configure_nsx_vcenter
+    cluster_ip                = var.cluster_ip
     license_tier              = var.license_tier
   }
   controller_sizes = {

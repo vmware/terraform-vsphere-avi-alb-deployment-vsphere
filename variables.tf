@@ -16,6 +16,11 @@ variable "controller_ha" {
   type        = bool
   default     = "false"
 }
+variable "cluster_ip" {
+  description = "Optional sets the IP address of the Avi Controller cluster. This address must be in the same subnet as the Avi Controller VMs."
+  type        = string
+  default     = null
+}
 variable "register_controller" {
   description = "If enabled is set to true the controller will be registered and licensed with Avi Cloud Services. The Long Organization ID (organization_id) can be found from https://console.cloud.vmware.com/csp/gateway/portal/#/organization/info. The jwt_token can be retrieved at https://portal.avipulse.vmware.com/portal/controller/auth/cspctrllogin"
   sensitive   = false
@@ -230,11 +235,11 @@ variable "compute_cluster" {
   default     = null
 }
 variable "controller_ip" {
-  description = "A list of IP Addresses that will be assigned to the Avi Controller(s). For a full HA deployment the list should contain 4 IP addresses. The first 3 addresses will be used for the individual controllers and the 4th IP address listed will be used as the Cluster IP"
+  description = "A list of IP Addresses that will be assigned to the Avi Controller(s). For a full HA deployment the list should contain 3 IP addresses. Optionally the cluster_ip variable can be used to specify the IP Address of the cluster."
   type        = list(string)
   validation {
-    condition     = length(var.controller_ip) == 4 || length(var.controller_ip) == 1
-    error_message = "The controller_ip value must be a list of either 1 for a single node deployment or 4 IP Addresses if controller_ha is set to true."
+    condition     = length(var.controller_ip) == 3 || length(var.controller_ip) == 1
+    error_message = "The controller_ip value must be a list of either 1 for a single node deployment or 3 IP Addresses if controller_ha is set to true."
   }
 }
 variable "controller_netmask" {

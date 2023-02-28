@@ -16,6 +16,15 @@
     api_version: ${avi_version}
     controller_ip:
       ${ indent(6, yamlencode(controller_ip))}
+%{ if cluster_ip != null ~}
+    cluster_ip:
+      type: V4
+      addr: ${cluster_ip}
+%{ else ~}
+    cluster_ip:
+      type: V4
+      addr: ""
+%{ endif ~}
     controller_names:
       ${ indent(6, yamlencode(controller_names))}
     cloud_name: "Default-Cloud"
@@ -736,9 +745,6 @@
       avi_cluster:
         avi_credentials: "{{ avi_credentials }}"
         state: present
-        virtual_ip:
-          type: V4
-          addr: "{{ controller_ip[3] }}"
         nodes:
             - name: "{{ controller_names[0] }}" 
               password: "{{ password }}"
@@ -755,7 +761,12 @@
               ip:
                 type: V4
                 addr: "{{ controller_ip[2] }}"
-        name: "{{ name_prefix }}-cluster"
+%{ if configure_gslb.enabled ~}
+            name: "{{ name_prefix }}-{{ configure_gslb.site_name }}-cluster"
+%{ else ~}
+            name: "{{ name_prefix }}-cluster"
+%{ endif ~}
+        virtual_ip: "{{ cluster_ip if cluster_ip.addr != '' else omit }}"
         tenant_uuid: "admin"
       until: cluster_config is not failed
       retries: 10
