@@ -66,6 +66,8 @@
           addr: "${item.addr}"
           type: ${item.type}
 %{ endfor ~}
+    email_config:
+      ${ indent(6, yamlencode(email_config))}
     configure_dns_profile:
       ${ indent(6, yamlencode(configure_dns_profile))}
     configure_dns_vs:
@@ -95,9 +97,7 @@
         avi_credentials: "{{ avi_credentials }}"
         state: present
         default_license_tier: "{{ license_tier }}"
-        email_configuration:
-          smtp_type: "SMTP_LOCAL_HOST"
-          from_email: admin@avicontroller.net
+        email_configuration: "{{ email_config }}"
         global_tenant_config:
           se_in_provider_context: true
           tenant_access_to_provider_se: true
