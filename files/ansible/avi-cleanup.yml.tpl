@@ -24,7 +24,7 @@
     register_controller:
       ${ indent(6, yamlencode(register_controller))}
     configure_gslb:
-        ${ indent(6, yamlencode(configure_gslb))}
+      ${ indent(6, yamlencode(configure_gslb))}
   tasks:
     - name: Remove all DNS Service Refs from System Configuration
       avi_api_session:
