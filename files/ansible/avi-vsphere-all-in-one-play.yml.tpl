@@ -29,6 +29,7 @@
       ${ indent(6, yamlencode(controller_names))}
     cloud_name: "Default-Cloud"
     license_tier: ${license_tier}
+    license_key: ${license_key}
     configure_nsx_cloud:
       ${ indent(6, yamlencode(configure_nsx_cloud))}
     configure_nsx_vcenter:
@@ -117,12 +118,33 @@
           redirect_to_https: true
           use_uuid_from_input: false
         welcome_workflow_complete: true
+      until: sysconfig is not failed
+      retries: 30
+      delay: 5
+      register: sysconfig
+
+    - name: Apply Avi License for ENTERPRISE Tier
+      avi_api_session:
+        avi_credentials: "{{ avi_credentials }}"
+        http_method: put
+        path: "licensing"
+        data:
+          serial_key: "{{ license_key }}"
+      when: license_tier == "ENTERPRISE" and license_key != ""
+      register: license
+      ignore_errors: yes
+
+    - name: Delete Trial Avi License when license is added successfully
+      avi_api_session:
+        avi_credentials: "{{ avi_credentials }}"
+        http_method: delete
+        path: "licensing/Eval"
+      when: license_tier == "ENTERPRISE" and license_key != "" and license.failed != true
+      ignore_errors: yes
 
     - name: Set Backup Passphrase
       avi_backupconfiguration:
         avi_credentials: "{{ avi_credentials }}"
-        avi_api_update_method: patch
-        avi_api_patch_op: add
         state: present
         name: Backup-Configuration
         backup_passphrase: "{{ password }}"

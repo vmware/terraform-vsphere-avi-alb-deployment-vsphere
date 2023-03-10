@@ -31,6 +31,7 @@ locals {
     configure_nsx_vcenter     = var.configure_nsx_vcenter
     cluster_ip                = var.cluster_ip
     license_tier              = var.license_tier
+    license_key               = var.license_key
   }
   controller_sizes = {
     small  = [8, 24576]

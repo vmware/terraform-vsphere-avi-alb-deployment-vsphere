@@ -56,3 +56,11 @@
       retries: 10
       delay: 10
       register: register_controller
+
+    - name: Delete Trial Avi License when Controller is registered successfully
+      avi_api_session:
+        avi_credentials: "{{ avi_credentials }}"
+        http_method: delete
+        path: "licensing/Eval"
+      when: register_controller is not failed
+      ignore_errors: yes
