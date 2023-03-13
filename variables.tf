@@ -16,6 +16,32 @@ variable "license_key" {
   type        = string
   default     = ""
 }
+variable "ca_certificates" {
+  description = "Import one or more Root or Intermediate Certificate Authority SSL certificates for the controller. The certificate must be in the PEM format and base64 encoded without line breaks. An example command for generating the proper format is 'base64 -w 0 ca.pem > ca.base64'"
+  type = list(object({
+    name        = string,
+    certificate = string,
+  }))
+  default = [{ name = "", certificate = "" }]
+}
+variable "portal_certificate" {
+  description = "Import a SSL certificate for the controller's web portal. The key and certificate must be in the PEM format and base64 encoded without line breaks. An example command for generating the proper format is 'base64 -w 0 certificate.pem > cert.base64'"
+  type = object({
+    key            = string,
+    certificate    = string,
+    key_passphrase = optional(string),
+  })
+  default = { key = "", certificate = "" }
+}
+variable "securechannel_certificate" {
+  description = "Import a SSL certificate for the controller's secure channel communication. Only if there is strict policy that requires all SSL certificates to be signed a specific CA should this variable be used otherwise the default generated certificate is recommended. The full cert chain is necessary and can be provided within the certificate PEM file or separately with the ca_certificates variable. The key and certificate must be in the PEM format and base64 encoded without line breaks. An example command for generating the proper format is 'base64 -w 0 certificate.pem > cert.base64'"
+  type = object({
+    key            = string,
+    certificate    = string,
+    key_passphrase = optional(string),
+  })
+  default = { key = "", certificate = "" }
+}
 variable "controller_ha" {
   description = "If true a HA controller cluster is deployed and configured"
   type        = bool

@@ -30,6 +30,12 @@
     cloud_name: "Default-Cloud"
     license_tier: ${license_tier}
     license_key: ${license_key}
+    ca_certificates:
+      ${ indent(6, yamlencode(ca_certificates))}
+    portal_certificate:
+      ${ indent(6, yamlencode(portal_certificate))}
+    securechannel_certificate:
+      ${ indent(6, yamlencode(securechannel_certificate))}
     configure_nsx_cloud:
       ${ indent(6, yamlencode(configure_nsx_cloud))}
     configure_nsx_vcenter:
@@ -141,6 +147,73 @@
         path: "licensing/Eval"
       when: license_tier == "ENTERPRISE" and license_key != "" and license.failed != true
       ignore_errors: yes
+
+    - name: Import CA SSL Certificates
+      avi_sslkeyandcertificate:
+        avi_credentials: "{{ avi_credentials }}"
+        name: "{{ item.name }}"
+        certificate_base64: true
+        certificate:
+          certificate: "{{ item.certificate }}"
+        format: SSL_PEM
+        type: SSL_CERTIFICATE_TYPE_CA
+      when: ca_certificates.0.certificate != ""
+      ignore_errors: yes
+      loop: "{{ ca_certificates }}"
+
+    - name: Import Portal SSL Certificate
+      avi_sslkeyandcertificate:
+        avi_credentials: "{{ avi_credentials }}"
+        name: "{{ name_prefix }}-Portal-Cert"
+        certificate_base64: true
+        key_base64: true
+        key: "{{ portal_certificate.key }}"
+        certificate:
+          certificate: "{{ portal_certificate.certificate }}"
+        key_passphrase: "{{ portal_certificate.key_passphrase | default(omit) }}"
+        format: SSL_PEM
+        type: SSL_CERTIFICATE_TYPE_SYSTEM
+      when: portal_certificate.certificate != ""
+      register: portal_cert
+      ignore_errors: yes
+
+    - name: Update Portal Cert in System Configuration
+      avi_systemconfiguration:
+        avi_credentials: "{{ avi_credentials }}"
+        state: present
+        avi_api_update_method: patch
+        avi_api_patch_op: replace
+        portal_configuration:
+          sslkeyandcertificate_refs:
+            - "/api/sslkeyandcertificate?name={{ name_prefix }}-Portal-Cert"
+      when: portal_cert is not failed
+      ignore_errors: yes
+
+    - name: Import Secure Channel SSL Certificate
+      avi_sslkeyandcertificate:
+        avi_credentials: "{{ avi_credentials }}"
+        name: "{{ name_prefix }}-Secure-Channel-Cert"
+        certificate_base64: true
+        key_base64: true
+        key: "{{ securechannel_certificate.key }}"
+        certificate:
+          certificate: "{{ securechannel_certificate.certificate }}"
+        key_passphrase: "{{ securechannel_certificate.key_passphrase | default(omit) }}"
+        format: SSL_PEM
+        type: SSL_CERTIFICATE_TYPE_SYSTEM
+      when: securechannel_certificate.certificate != ""
+      register: securechannel_cert
+
+    - name: Update Secure Channel Cert in System Configuration
+      avi_systemconfiguration:
+        avi_credentials: "{{ avi_credentials }}"
+        state: present
+        avi_api_update_method: patch
+        avi_api_patch_op: replace
+        secure_channel_configuration:
+          sslkeyandcertificate_refs:
+            - "/api/sslkeyandcertificate?name={{ name_prefix }}-Secure-Channel-Cert"
+      when: securechannel_cert is not failed
 
     - name: Set Backup Passphrase
       avi_backupconfiguration:
@@ -829,6 +902,20 @@
       ansible.builtin.file:
         path: /home/admin/ansible/views_albservices.patch
         state: absent
+
+    - name: Remove Cert Keys
+      ansible.builtin.replace:
+        path: /home/admin/ansible/avi-controller-aws-all-in-one-play.yml
+        regexp: '^(\s*)(\"key\":\s+)(.*)$'
+        replace: '\1\2""'
+      when: ca_certificates.0.certificate != "" or portal_certificate.certificate != "" or securechannel_certificate.certificate != ""
+
+    - name: Remove Certificates
+      ansible.builtin.replace:
+        path: /home/admin/ansible/avi-controller-aws-all-in-one-play.yml
+        regexp: '^(\s*)\s*(-\s+)?\"certificate\":\s+\".*\"$'
+        replace: '\1\2"certificate": ""'
+      when: ca_certificates.0.certificate != "" or portal_certificate.certificate != "" or securechannel_certificate.certificate != ""
 
 %{ if avi_upgrade.enabled || register_controller.enabled  ~}
     - name: Verify Cluster State if avi_upgrade or register_controller plays will be ran
