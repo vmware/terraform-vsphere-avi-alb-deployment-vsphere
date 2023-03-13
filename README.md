@@ -328,17 +328,16 @@ The jwt_token can be retrieved at https://portal.avipulse.vmware.com/portal/cont
 
 Example run (appropriate variable values should be used):
 ```bash
-~$ ansible-playbook avi-cloud-services-registration.yml -e password=${var.controller_password} -e registration_account_id=${var.register_controller.organization_id} -e registration_email=${var.register_controller.email} -e registration_jwt=${var.register_controller.jwt_token} > ansible-playbook-run.log
+~$ ansible-playbook avi-cloud-services-registration.yml -e password=${var.controller_password} -e register_controller.jwt_token=${var.register_controller.jwt_token} > ansible-playbook-run.log
 ```
 
 ### avi-cleanup.yml
-This play will disable all Virtual Services and delete all existing Avi service engines. This playbook should be ran before deleting the controller with terraform destroy to clean up the resources created by the Avi Controller. 
+This play will disable all Virtual Services, delete all existing Avi service engines, and de-register the controller from Cloud Services. This playbook should be ran before deleting the controller with terraform destroy to clean up the resources created by the Avi Controller. Note that additional items created by the controller may be created and need to be manually removed.
 
-Example run (appropriate variable values should be used):
+Example run (appropriate variable values should be used and -e register_controller.jwt_token is only needed when register_controller.enabled is set to true):
 ```bash
-~$ ansible-playbook avi-cleanup.yml -e password=${var.controller_password}
+~$ ansible-playbook avi-cleanup.yml -e password=${var.controller_password} -e register_controller.jwt_token=${var.register_controller.jwt_token}
 ```
-
 ## Contributing
 
 The terraform-vsphere-avi-alb-deployment-vsphere project team welcomes contributions from the community. Before you start working with this project please read and sign our Contributor License Agreement (https://cla.vmware.com/cla/1/preview). If you wish to contribute code and you have not signed our Contributor Licence Agreement (CLA), our bot will prompt you to do so when you open a Pull Request. For any questions about the CLA process, please refer to our [FAQ](https://cla.vmware.com/faq). For more detailed information, refer to [CONTRIBUTING.md](CONTRIBUTING.md).

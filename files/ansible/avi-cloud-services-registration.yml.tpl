@@ -15,6 +15,9 @@
         api_version: "{{ api_version }}"
     controller_ip:
       ${ indent(6, yamlencode(controller_ip))}
+    playbooks:
+      - "/home/admin/ansible/avi-cloud-services-registration.yml"
+      - "/home/admin/ansible/avi-cleanup.yml"
 %{ if configure_gslb.enabled ~}
     controller_name: "{{ name_prefix }}-{{ configure_gslb.site_name }}-cluster"
     controller_description: "{{ name_prefix }} {{ configure_gslb.site_name }} Cluster"
@@ -66,3 +69,11 @@
         path: "licensing/Eval"
       when: register_controller is not failed
       ignore_errors: yes
+    
+    - name: Clear JWT Token Variable
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: '^(\s*)(\"jwt_token\":\s+)(.*)$'
+        replace: '\1\2""'
+      when: register_controller.jwt_token != ""
+      loop: "{{ playbooks }}"
