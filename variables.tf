@@ -20,7 +20,7 @@ variable "ca_certificates" {
   description = "Import one or more Root or Intermediate Certificate Authority SSL certificates for the controller. The certificate must be in the PEM format and base64 encoded without line breaks. An example command for generating the proper format is 'base64 -w 0 ca.pem > ca.base64'"
   type = list(object({
     name        = string,
-    certificate = string,
+    certificate = string
   }))
   default = [{ name = "", certificate = "" }]
 }
@@ -29,7 +29,7 @@ variable "portal_certificate" {
   type = object({
     key            = string,
     certificate    = string,
-    key_passphrase = optional(string),
+    key_passphrase = optional(string)
   })
   default = { key = "", certificate = "" }
 }
@@ -38,7 +38,7 @@ variable "securechannel_certificate" {
   type = object({
     key            = string,
     certificate    = string,
-    key_passphrase = optional(string),
+    key_passphrase = optional(string)
   })
   default = { key = "", certificate = "" }
 }
@@ -53,10 +53,17 @@ variable "cluster_ip" {
   default     = null
 }
 variable "register_controller" {
-  description = "If enabled is set to true the controller will be registered and licensed with Avi Cloud Services. The Long Organization ID (organization_id) can be found from https://console.cloud.vmware.com/csp/gateway/portal/#/organization/info. The jwt_token can be retrieved at https://portal.avipulse.vmware.com/portal/controller/auth/cspctrllogin"
+  description = "If enabled is set to true the controller will be registered and licensed with Avi Cloud Services. The Long Organization ID (organization_id) can be found from https://console.cloud.vmware.com/csp/gateway/portal/#/organization/info. The jwt_token can be retrieved at https://portal.avipulse.vmware.com/portal/controller/auth/cspctrllogin. Optionally the controller name and description used during the registration can be set; otherwise, the name_prefix and configure_gslb.site_name variables will be used."
   sensitive   = false
-  type        = object({ enabled = bool, jwt_token = string, email = string, organization_id = string })
-  default     = { enabled = "false", jwt_token = "", email = "", organization_id = "" }
+  type = object({
+    enabled         = bool,
+    jwt_token       = string,
+    email           = string,
+    organization_id = string,
+    name            = optional(string),
+    description     = optional(string)
+  })
+  default = { enabled = "false", jwt_token = "", email = "", organization_id = "" }
 }
 variable "create_roles" {
   description = "This variable controls the creation of Avi specific vSphere Roles for the Avi Controller to use. When set to false these roles should already be created and assigned to the vSphere account used by the Avi Controller."
@@ -84,8 +91,12 @@ variable "avi_version" {
 variable "avi_upgrade" {
   description = "This variable determines if a patch upgrade is performed after install. The enabled key should be set to true and the url from the Avi Cloud Services portal for the should be set for the upgrade_file_uri key. Valid upgrade_type values are patch or system"
   sensitive   = false
-  type        = object({ enabled = bool, upgrade_type = string, upgrade_file_uri = string })
-  default     = { enabled = "false", upgrade_type = "patch", upgrade_file_uri = "" }
+  type = object({
+    enabled          = bool,
+    upgrade_type     = string,
+    upgrade_file_uri = string
+  })
+  default = { enabled = "false", upgrade_type = "patch", upgrade_file_uri = "" }
 }
 variable "controller_size" {
   description = "This value determines the number of vCPUs and memory allocated for the Avi Controller. Possible values are small, medium, or large."
@@ -131,8 +142,13 @@ variable "configure_nsx_vcenter" {
 variable "configure_ipam_profile" {
   description = "Configure Avi IPAM Profile for Virtual Service Address Allocation. Example: { enabled = \"true\", networks = [{ network = \"192.168.1.0/24\" , static_pool = [\"192.168.1.10\",\"192.168.1.30\"]}] }"
   type = object({
-    enabled  = bool,
-    networks = list(object({ portgroup = string, network = string, type = string, static_pool = list(string) }))
+    enabled = bool,
+    networks = list(object({
+      portgroup   = string,
+      network     = string,
+      type        = string,
+      static_pool = list(string)
+    }))
   })
   default = { enabled = "false", networks = [{ portgroup = "", network = "", type = "", static_pool = [""] }] }
 }
@@ -143,7 +159,13 @@ variable "configure_dns_profile" {
     type           = optional(string, "AVI"),
     usable_domains = list(string),
     ttl            = optional(string, "30"),
-    aws_profile    = optional(object({ iam_assume_role = string, region = string, vpc_id = string, access_key_id = string, secret_access_key = string }))
+    aws_profile = optional(object({
+      iam_assume_role   = string,
+      region            = string,
+      vpc_id            = string,
+      access_key_id     = string,
+      secret_access_key = string
+    }))
   })
   default = { enabled = false, type = "AVI", usable_domains = [] }
   validation {
@@ -158,7 +180,7 @@ variable "configure_dns_vs" {
     portgroup        = string,
     network          = string,
     auto_allocate_ip = optional(bool, true),
-    vs_ip            = optional(string)
+    vs_ip            = optional(string),
     type             = optional(string, "V4")
   })
   default = { enabled = "false", network = "", portgroup = "" }
@@ -166,13 +188,16 @@ variable "configure_dns_vs" {
 variable "configure_gslb" {
   description = "Configures GSLB. In addition the configure_dns_vs variable must also be set for GSLB to be configured. See the GSLB Deployment README section for more information."
   type = object({
-    enabled          = bool,
-    leader           = optional(bool, false),
-    site_name        = string,
-    domains          = optional(list(string)),
-    create_se_group  = optional(bool, true),
-    se_size          = optional(list(number), [2, 8, 30]),
-    additional_sites = optional(list(object({ name = string, ip_address_list = list(string) })))
+    enabled         = bool,
+    leader          = optional(bool, false),
+    site_name       = string,
+    domains         = optional(list(string)),
+    create_se_group = optional(bool, true),
+    se_size         = optional(list(number), [2, 8, 30]),
+    additional_sites = optional(list(object({
+      name            = string,
+      ip_address_list = list(string)
+    })))
   })
   default = { enabled = "false", site_name = "", domains = [""] }
 }
@@ -219,8 +244,13 @@ variable "configure_se_mgmt_network" {
 }
 variable "se_mgmt_network" {
   description = "This variable configures the SE management network. Example: { network = \"192.168.10.0/24\" , gateway = \"192.168.10.1\", type = \"V4\", static_pool = [\"192.168.10.10\",\"192.168.10.30\"]}"
-  type        = object({ network = string, gateway = string, type = string, static_pool = list(string) })
-  default     = { network = "", gateway = "", type = "", static_pool = [""] }
+  type = object({
+    network     = string,
+    gateway     = string,
+    type        = string,
+    static_pool = list(string)
+  })
+  default = { network = "", gateway = "", type = "", static_pool = [""] }
 }
 variable "vm_folder" {
   description = "The folder that the Avi Controller(s) will be placed in. This will be the full path and name of the folder that will be created"
@@ -306,8 +336,11 @@ variable "se_ha_mode" {
 }
 variable "dns_servers" {
   description = "The optional DNS servers that will be used for local DNS resolution by the controller. The server should be a valid IP address (v4 or v6) and valid options for type are V4 or V6. Example: [{ addr = \"8.8.4.4\", type = \"V4\"}, { addr = \"8.8.8.8\", type = \"V4\"}]"
-  type        = list(object({ addr = string, type = string }))
-  default     = null
+  type = list(object({
+    addr = string,
+    type = string
+  }))
+  default = null
 }
 variable "dns_search_domain" {
   description = "The optional DNS search domain that will be used by the controller"
@@ -316,12 +349,22 @@ variable "dns_search_domain" {
 }
 variable "ntp_servers" {
   description = "The NTP Servers that the Avi Controllers will use. The server should be a valid IP address (v4 or v6) or a DNS name. Valid options for type are V4, DNS, or V6"
-  type        = list(object({ addr = string, type = string }))
-  default     = [{ addr = "0.us.pool.ntp.org", type = "DNS" }, { addr = "1.us.pool.ntp.org", type = "DNS" }, { addr = "2.us.pool.ntp.org", type = "DNS" }, { addr = "3.us.pool.ntp.org", type = "DNS" }]
+  type = list(object({
+    addr = string,
+    type = string
+  }))
+  default = [{ addr = "0.us.pool.ntp.org", type = "DNS" }, { addr = "1.us.pool.ntp.org", type = "DNS" }, { addr = "2.us.pool.ntp.org", type = "DNS" }, { addr = "3.us.pool.ntp.org", type = "DNS" }]
 }
 variable "email_config" {
   description = "The Email settings that will be used for sending password reset information or for trigged alerts. The default setting will send emails directly from the Avi Controller"
   sensitive   = false
-  type        = object({ smtp_type = string, from_email = string, mail_server_name = string, mail_server_port = string, auth_username = string, auth_password = string })
-  default     = { smtp_type = "SMTP_LOCAL_HOST", from_email = "admin@avicontroller.net", mail_server_name = "localhost", mail_server_port = "25", auth_username = "", auth_password = "" }
+  type = object({
+    smtp_type        = string,
+    from_email       = string,
+    mail_server_name = string,
+    mail_server_port = string,
+    auth_username    = string,
+    auth_password    = string
+  })
+  default = { smtp_type = "SMTP_LOCAL_HOST", from_email = "admin@avicontroller.net", mail_server_name = "localhost", mail_server_port = "25", auth_username = "", auth_password = "" }
 }

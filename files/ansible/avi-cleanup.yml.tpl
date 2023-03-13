@@ -14,6 +14,13 @@
         password: "{{ password }}"
         api_version: "{{ api_version }}"
     controller: "{{ ansible_host }}"
+%{ if configure_gslb.enabled ~}
+    controller_name: "{{ name_prefix }}-{{ configure_gslb.site_name }}-cluster"
+    controller_description: "{{ name_prefix }} {{ configure_gslb.site_name }} Cluster"
+%{ else ~}
+    controller_name: "{{ name_prefix }}-cluster"
+    controller_description: "{{ name_prefix }} Cluster"
+%{ endif ~}
     username: admin
     cloud_name: "Default-Cloud"
     ansible_become: yes
@@ -95,13 +102,8 @@
         avi_credentials: "{{ avi_credentials }}"
         state: absent
         jwt_token: "{{ register_controller.jwt_token }}"
-%{ if configure_gslb.enabled ~}
-        name: "{{ name_prefix }}-{{ configure_gslb.site_name }}-cluster"
-        description: "{{ name_prefix }} {{ configure_gslb.site_name }} Cluster"
-%{ else ~}
-        name: "{{ name_prefix }}-cluster"
-        description: "{{ name_prefix }} Cluster"
-%{ endif ~}
+        name: "{{ register_controller.name | default(controller_name) }}"
+        description: "{{ register_controller.description | default(controller_description) }}"
         email: "{{ register_controller.email }}"
         account_id: "{{ register_controller.organization_id }}"
         optins: present
