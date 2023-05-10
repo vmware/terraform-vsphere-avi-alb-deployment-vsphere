@@ -5,8 +5,6 @@
   hosts: localhost
   connection: local
   gather_facts: no
-  roles:
-    - role: avinetworks.avisdk
   vars:
     upgrade_file_uri: ${avi_upgrade.upgrade_file_uri}
     upgrade_type: patch

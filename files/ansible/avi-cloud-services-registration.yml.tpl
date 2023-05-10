@@ -5,8 +5,6 @@
   hosts: localhost
   connection: local
   gather_facts: no
-  roles:
-    - role: avinetworks.avisdk
   vars:
     avi_credentials:
         controller: "{{ controller_ip[0] }}"
