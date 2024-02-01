@@ -33,9 +33,7 @@
   tasks:
     - name: Remove all DNS Service Refs from System Configuration
       avi_api_session:
-        controller: "{{ controller }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
+        avi_credentials: "{{ avi_credentials }}"
         http_method: patch
         path: "systemconfiguration"
         tenant: "admin"
@@ -45,9 +43,7 @@
 
     - name: Get Virtual Service Information
       avi_api_session:
-        controller: "{{ controller }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
+        avi_credentials: "{{ avi_credentials }}"
         http_method: get
         path: virtualservice
         tenant: "*"
@@ -61,9 +57,7 @@
 
     - name: Delete all Virtual Services
       avi_api_session:
-        controller: "{{ controller }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
+        avi_credentials: "{{ avi_credentials }}"
         http_method: delete
         path: "virtualservice/{{ item.uuid }}"
         tenant: "*"
@@ -71,9 +65,7 @@
 
     - name: Get Service Engine Information
       avi_api_session:
-        controller: "{{ controller }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
+        avi_credentials: "{{ avi_credentials }}"
         http_method: get
         path: serviceengine
         tenant: "*"
@@ -87,9 +79,7 @@
 
     - name: Delete all Service Engines
       avi_api_session:
-        controller: "{{ controller }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
+        avi_credentials: "{{ avi_credentials }}"
         http_method: delete
         path: "serviceengine/{{ item.uuid }}"
       loop: "{{ se_results.obj.results }}"
