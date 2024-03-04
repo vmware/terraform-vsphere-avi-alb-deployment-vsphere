@@ -9,5 +9,5 @@ output "controllers" {
 }
 output "gslb_ip" {
   description = "The IP Address of AVI Controller Information"
-  value       = var.controller_ha ? var.controller_ip[3] : var.controller_ip[0]
+  value       = var.controller_ha ? var.cluster_ip : var.controller_ip[0]
 }
