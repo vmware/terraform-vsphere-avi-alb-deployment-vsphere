@@ -1,8 +1,8 @@
-# AVI Controller Deployment on vSphere Terraform module
-This Terraform module creates and configures an AVI (NSX Advanced Load-Balancer) Controller on vSphere
+# Avi Load Balancer Controller Deployment on vSphere Terraform module
+This Terraform module creates and configures an Avi Advanced Load-Balancer Controller on vSphere
 
 ## Module Functions
-The module is meant to be modular and can create all or none of the prerequiste resources needed for the AVI vSphere Deployment including:
+The module is meant to be modular and can create all or none of the prerequiste resources needed for the Avi vSphere Deployment including:
 * vSphere Roles for Avi (optional with create_role variable)
 * vSphere virtual machines for Avi Controller(s)
 * Cluster Anti-Affinity rules for HA Avi Controller Deployment
@@ -281,14 +281,14 @@ The controller_size variable can be used to determine the vCPU and Memory resour
 
 | Size | vCPU Cores | Memory (GB)|
 |------|-----------|--------|
-| small | 8 | 24 |
-| medium | 16 | 32 |
-| large | 24 | 48 |
+| small | 6 | 32 |
+| medium | 10 | 32 |
+| large | 16 | 48 |
 
 Additional resources on sizing the Avi Controller:
 
-https://avinetworks.com/docs/latest/avi-controller-sizing/
-https://avinetworks.com/docs/latest/system-limits/
+https://docs.vmware.com/en/VMware-NSX-Advanced-Load-Balancer/30.1/Installation-Guide/GUID-6366FAA5-8FDF-4B0F-B170-1D846B6CAF86.html
+https://docs.vmware.com/en/VMware-NSX-Advanced-Load-Balancer/30.1/Installation-Guide/GUID-EDCC0BE7-C694-477E-B445-8EAA684792B9.html
 
 ## Day 1 Ansible Configuration and Avi Resource Cleanup
 The module copies and runs an Ansible play for configuring the initial day 1 Avi config. The plays listed below can be reviewed by connecting to the Avi Controller by SSH. In an HA setup the first controller will have these files. 

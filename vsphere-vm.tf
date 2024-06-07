@@ -37,10 +37,11 @@ locals {
     ca_certificates           = var.ca_certificates
   }
   controller_sizes = {
-    small  = [8, 24576]
-    medium = [16, 32768]
-    large  = [24, 49152]
+    small  = [6, 32768]
+    medium = [10, 32768]
+    large  = [16, 49152]
   }
+
   controller_names = vsphere_virtual_machine.avi_controller[*].name
   controller_ips   = var.controller_ha ? [var.controller_ip[0], var.controller_ip[1], var.controller_ip[2]] : [var.controller_ip[0]]
   controller_info  = zipmap(vsphere_virtual_machine.avi_controller[*].name, local.controller_ips)
@@ -87,13 +88,13 @@ resource "vsphere_compute_cluster_vm_anti_affinity_rule" "avi" {
   count               = var.controller_ha ? 1 : 0
   name                = "${var.name_prefix}-avi-controller-vm-anti-affinity-rule"
   compute_cluster_id  = data.vsphere_compute_cluster.avi[0].id
-  virtual_machine_ids = vsphere_virtual_machine.avi_controller.*.id
+  virtual_machine_ids = vsphere_virtual_machine.avi_controller[*].id
   mandatory           = "true"
 }
 resource "null_resource" "ansible_provisioner" {
   # Changes to any instance of the cluster requires re-provisioning
   triggers = {
-    controller_instance_ids = join(",", vsphere_virtual_machine.avi_controller.*.name)
+    controller_instance_ids = join(",", vsphere_virtual_machine.avi_controller[*].name)
   }
   connection {
     type     = "ssh"

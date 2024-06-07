@@ -357,7 +357,7 @@
             vcenter_url: "{{ vsphere_server }}"
             privilege: WRITE_ACCESS
             datacenter: "{{ vm_datacenter }}"
-%{ if (split(".", avi_version)[0] == "22") || (split(".", avi_version)[0] == "21" && split(".", avi_version)[2] >= 6) ~}
+%{ if (split(".", avi_version)[0] == "30") || (split(".", avi_version)[0] == "22") || (split(".", avi_version)[0] == "21" && split(".", avi_version)[2] >= 6) ~}
             use_content_lib: "{{ use_content_lib }}"
 %{ if use_content_lib ~}
             content_lib:
@@ -383,6 +383,7 @@
           avi_api_update_method: patch
           avi_api_patch_op: add
           name: "{{ cloud_name }}"
+          vtype: CLOUD_VCENTER
           vcenter_configuration:
             management_network: "{{ mgmt_network.obj.results.0.url }}"
 %{ if configure_se_mgmt_network ~}
@@ -855,9 +856,9 @@
                 type: V4
                 addr: "{{ controller_ip[2] }}"
 %{ if configure_gslb.enabled ~}
-            name: "{{ name_prefix }}-{{ configure_gslb.site_name }}-cluster"
+        name: "{{ name_prefix }}-{{ configure_gslb.site_name }}-cluster"
 %{ else ~}
-            name: "{{ name_prefix }}-cluster"
+        name: "{{ name_prefix }}-cluster"
 %{ endif ~}
         virtual_ip: "{{ cluster_ip if cluster_ip.addr != '' else omit }}"
         tenant_uuid: "admin"
